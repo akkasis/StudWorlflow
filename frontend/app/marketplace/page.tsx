@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StudentCard, StudentData } from "@/components/student-card"
+import { apiUrl } from "@/lib/api"
 
 const SORT_OPTIONS = [
   { value: "popular", label: "По популярности" },
@@ -30,7 +31,7 @@ export default function MarketplacePage() {
   useEffect(() => {
     setLoading(true)
 
-    fetch(`http://localhost:3001/profiles?sort=${sortBy}`)
+    fetch(apiUrl(`/profiles?sort=${sortBy}`))
       .then((res) => res.json())
       .then((data) => {
         setStudents(data)

@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Search } from "lucide-react"
+import { apiUrl } from "@/lib/api"
 
 interface AdminUser {
   id: string
@@ -56,13 +57,13 @@ export default function AdminPage() {
     if (!token) return
 
     const [overviewRes, usersRes, reviewsRes] = await Promise.all([
-      fetch("http://localhost:3001/admin/overview", {
+      fetch(apiUrl("/admin/overview"), {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      fetch("http://localhost:3001/admin/users", {
+      fetch(apiUrl("/admin/users"), {
         headers: { Authorization: `Bearer ${token}` },
       }),
-      fetch("http://localhost:3001/admin/reviews", {
+      fetch(apiUrl("/admin/reviews"), {
         headers: { Authorization: `Bearer ${token}` },
       }),
     ])
@@ -117,7 +118,7 @@ export default function AdminPage() {
 
   const updateUser = async (userId: string, payload: Record<string, unknown>) => {
     if (!token) return
-    await fetch(`http://localhost:3001/admin/users/${userId}`, {
+    await fetch(apiUrl(`/admin/users/${userId}`), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -130,7 +131,7 @@ export default function AdminPage() {
 
   const updateReview = async (reviewId: number, payload: Record<string, unknown>) => {
     if (!token) return
-    await fetch(`http://localhost:3001/admin/reviews/${reviewId}`, {
+    await fetch(apiUrl(`/admin/reviews/${reviewId}`), {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
@@ -143,7 +144,7 @@ export default function AdminPage() {
 
   const deleteReview = async (reviewId: number) => {
     if (!token) return
-    await fetch(`http://localhost:3001/admin/reviews/${reviewId}`, {
+    await fetch(apiUrl(`/admin/reviews/${reviewId}`), {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -260,7 +261,7 @@ export default function AdminPage() {
                               <Input
                                 defaultValue={selectedUser.profile.name}
                                 onBlur={(e) =>
-                                  fetch(`http://localhost:3001/admin/profiles/${selectedUser.profile?.id}`, {
+                                  fetch(apiUrl(`/admin/profiles/${selectedUser.profile?.id}`), {
                                     method: "PATCH",
                                     headers: {
                                       "Content-Type": "application/json",
@@ -274,7 +275,7 @@ export default function AdminPage() {
                                 type="number"
                                 defaultValue={selectedUser.profile.course}
                                 onBlur={(e) =>
-                                  fetch(`http://localhost:3001/admin/profiles/${selectedUser.profile?.id}`, {
+                                  fetch(apiUrl(`/admin/profiles/${selectedUser.profile?.id}`), {
                                     method: "PATCH",
                                     headers: {
                                       "Content-Type": "application/json",
@@ -297,7 +298,7 @@ export default function AdminPage() {
                               <Textarea
                                 defaultValue={selectedUser.profile.description || ""}
                                 onBlur={(e) =>
-                                  fetch(`http://localhost:3001/admin/profiles/${selectedUser.profile?.id}`, {
+                                  fetch(apiUrl(`/admin/profiles/${selectedUser.profile?.id}`), {
                                     method: "PATCH",
                                     headers: {
                                       "Content-Type": "application/json",
@@ -312,7 +313,7 @@ export default function AdminPage() {
                                 defaultValue={selectedUser.profile.pricePerHour || 0}
                                 inputMode="numeric"
                                 onBlur={(e) =>
-                                  fetch(`http://localhost:3001/admin/profiles/${selectedUser.profile?.id}`, {
+                                  fetch(apiUrl(`/admin/profiles/${selectedUser.profile?.id}`), {
                                     method: "PATCH",
                                     headers: {
                                       "Content-Type": "application/json",

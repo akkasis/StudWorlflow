@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useAuth } from "@/context/auth-context"
+import { apiUrl } from "@/lib/api"
+import { useAppAlert } from "@/components/app-alert-provider"
 
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
+  const { showAlert } = useAppAlert()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -24,7 +27,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("http://localhost:3001/auth/login", {
+      const res = await fetch(apiUrl("/auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -35,7 +38,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert("Неверный email или пароль")
+        showAlert("Не удалось войти", "Проверь email и пароль, а затем попробуй снова.")
         setIsLoading(false)
         return
       }
@@ -51,7 +54,7 @@ export default function LoginPage() {
       }
 
     } catch (err) {
-      alert("Ошибка сервера")
+      showAlert("Ошибка сервера", "Сейчас не удалось выполнить вход. Попробуй еще раз чуть позже.")
       setIsLoading(false)
     }
   }
@@ -68,7 +71,7 @@ export default function LoginPage() {
               <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold">
-              stud<span className="text-gradient">workflow</span>
+              Skill<span className="text-gradient">ent</span>
             </span>
           </Link>
 

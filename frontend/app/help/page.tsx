@@ -16,7 +16,7 @@ export default function HelpPage() {
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/12">
               <CircleHelp className="h-6 w-6 text-primary" />
             </div>
-            <h1 className="mt-4 text-4xl font-bold">Помощь по studworkflow</h1>
+            <h1 className="mt-4 text-4xl font-bold">Помощь по Skillent</h1>
             <p className="mt-3 text-muted-foreground">
               Коротко и понятно: как найти тьютора, как создать анкету и как пользоваться сервисом внутри РАНХиГС.
             </p>
@@ -79,9 +79,20 @@ export default function HelpPage() {
           </div>
 
           <div className="flex justify-center">
-            <Link href="/marketplace">
-              <Button>Перейти к тьюторам</Button>
-            </Link>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Link href="/marketplace">
+                <Button>Перейти к тьюторам</Button>
+              </Link>
+              <Link href="/privacy">
+                <Button variant="outline">Конфиденциальность</Button>
+              </Link>
+              <Link href="/terms">
+                <Button variant="outline">Соглашение</Button>
+              </Link>
+              <Link href="/moderation-rules">
+                <Button variant="outline">Правила модерации</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </main>

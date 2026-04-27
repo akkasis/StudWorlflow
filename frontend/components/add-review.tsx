@@ -6,6 +6,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
+import { apiUrl } from "@/lib/api"
+import { useAppAlert } from "@/components/app-alert-provider"
 
 export function AddReview({
   profileId,
@@ -15,6 +17,7 @@ export function AddReview({
   ownerUserId?: string
 }) {
   const { user } = useAuth()
+  const { showAlert } = useAppAlert()
   const [text, setText] = useState("")
   const [rating, setRating] = useState(5)
   const [loading, setLoading] = useState(false)
@@ -27,14 +30,14 @@ export function AddReview({
     const token = localStorage.getItem("token")
 
     if (!token) {
-      alert("Сначала войди в аккаунт")
+      showAlert("Нужен вход", "Сначала войди в аккаунт, чтобы оставить отзыв.")
       return
     }
 
     setLoading(true)
 
     try {
-      const res = await fetch("http://localhost:3001/reviews", {
+      const res = await fetch(apiUrl("/reviews"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +53,7 @@ export function AddReview({
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.message || "Не удалось отправить отзыв")
+        showAlert("Не удалось отправить отзыв", data.message || "Попробуй снова немного позже.")
         return
       }
 

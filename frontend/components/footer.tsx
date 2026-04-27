@@ -13,7 +13,7 @@ export function Footer() {
                 <GraduationCap className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold tracking-tight text-foreground">
-                stud<span className="text-gradient">workflow</span>
+                Skill<span className="text-gradient">ent</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
@@ -75,13 +75,18 @@ export function Footer() {
             <h3 className="text-sm font-semibold text-foreground mb-4">Документы</h3>
             <ul className="space-y-3">
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Конфиденциальность
+                <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Политика конфиденциальности
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Условия
+                <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Пользовательское соглашение
+                </Link>
+              </li>
+              <li>
+                <Link href="/moderation-rules" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Правила модерации
                 </Link>
               </li>
               <li>
@@ -95,7 +100,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border/50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} studworkflow. Все права защищены.
+            &copy; {new Date().getFullYear()} Skillent. Все права защищены.
           </p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">

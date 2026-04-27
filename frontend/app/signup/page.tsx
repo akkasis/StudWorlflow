@@ -12,12 +12,15 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/auth-context"
+import { apiUrl } from "@/lib/api"
+import { useAppAlert } from "@/components/app-alert-provider"
 
 const UNIVERSITY_NAME = "РАНХиГС"
 
 export default function SignupPage() {
   const router = useRouter()
   const { login } = useAuth()
+  const { showAlert } = useAppAlert()
 
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +35,7 @@ export default function SignupPage() {
     setIsLoading(true)
 
     try {
-      const res = await fetch("http://localhost:3001/auth/register", {
+      const res = await fetch(apiUrl("/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -53,7 +56,7 @@ export default function SignupPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.message || "Ошибка")
+        showAlert("Не удалось создать аккаунт", data.message || "Проверь введенные данные и попробуй снова.")
         setIsLoading(false)
         return
       }
@@ -62,7 +65,7 @@ export default function SignupPage() {
       router.push(userType === "tutor" ? "/dashboard" : "/marketplace")
     } catch (error) {
       console.error(error)
-      alert("Что-то пошло не так")
+      showAlert("Ошибка сервера", "Сейчас не удалось завершить регистрацию. Попробуй еще раз чуть позже.")
     }
 
     setIsLoading(false)
@@ -82,7 +85,7 @@ export default function SignupPage() {
           </Badge>
           <h1 className="max-w-xl text-5xl font-bold leading-tight">
             Учись и зарабатывай внутри{" "}
-            <span className="text-gradient">studworkflow</span>
+            <span className="text-gradient">Skillent</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
             Найди тьютора по своему предмету или создай анкету и помогай другим студентам РАНХиГС.
@@ -118,7 +121,7 @@ export default function SignupPage() {
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary">
                   <GraduationCap className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <span className="text-2xl font-bold">studworkflow</span>
+                <span className="text-2xl font-bold">Skillent</span>
               </Link>
 
               <div>

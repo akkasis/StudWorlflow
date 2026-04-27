@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
+import { apiUrl } from "@/lib/api"
 
 interface SupportThreadSummary {
   userId: string
@@ -44,7 +45,7 @@ export default function SupportPage() {
 
   const loadThreads = async () => {
     if (!token) return
-    const res = await fetch("http://localhost:3001/support/threads", {
+    const res = await fetch(apiUrl("/support/threads"), {
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
@@ -57,8 +58,8 @@ export default function SupportPage() {
   const loadMessages = async (threadId?: string | null) => {
     if (!token) return
     const url = isModerator && threadId
-      ? `http://localhost:3001/support/thread/${threadId}`
-      : "http://localhost:3001/support/thread"
+      ? apiUrl(`/support/thread/${threadId}`)
+      : apiUrl("/support/thread")
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -82,8 +83,8 @@ export default function SupportPage() {
     if (!token || !text.trim()) return
 
     const url = isModerator && activeThreadId
-      ? `http://localhost:3001/support/${activeThreadId}/reply`
-      : "http://localhost:3001/support"
+      ? apiUrl(`/support/${activeThreadId}/reply`)
+      : apiUrl("/support")
 
     await fetch(url, {
       method: "POST",

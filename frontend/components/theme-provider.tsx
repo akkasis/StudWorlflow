@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light')
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('studworkflow-theme')
+    const savedTheme = localStorage.getItem('skillent-theme')
     const initialTheme = savedTheme === 'dark' ? 'dark' : 'light'
     setThemeState(initialTheme)
     applyTheme(initialTheme)
@@ -36,7 +36,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   const setTheme = (nextTheme: Theme) => {
     setThemeState(nextTheme)
-    localStorage.setItem('studworkflow-theme', nextTheme)
+    localStorage.setItem('skillent-theme', nextTheme)
     applyTheme(nextTheme)
   }
 

@@ -5,13 +5,14 @@ import './globals.css'
 
 import { AuthProvider } from '@/context/auth-context' // 👈 добавили
 import { ThemeProvider } from '@/components/theme-provider'
+import { AppAlertProvider } from '@/components/app-alert-provider'
 
 const _inter = Inter({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: 'studworkflow',
-  description: 'studworkflow — поиск тьюторов, отзывы, сообщения и личный кабинет для студентов.',
+  title: 'Skillent',
+  description: 'Skillent — поиск тьюторов, отзывы, сообщения и личный кабинет для студентов.',
   generator: 'v0.app',
   icons: {
     icon: [
@@ -41,9 +42,11 @@ export default function RootLayout({
     <html lang="ru" className="bg-background" suppressHydrationWarning>
       <body className="font-sans antialiased min-h-screen">
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <AppAlertProvider>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </AppAlertProvider>
         </ThemeProvider>
 
         {process.env.NODE_ENV === 'production' && <Analytics />}

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StudentCard, StudentData } from "@/components/student-card"
+import { apiUrl } from "@/lib/api"
 
 // ❌ УДАЛЯЕМ mock-data
 // import { students, categories, testimonials } from "@/lib/mock-data"
@@ -22,7 +23,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch("http://localhost:3001/profiles")
+    fetch(apiUrl("/profiles"))
       .then((res) => res.json())
       .then((data) => {
         setStudents(data)

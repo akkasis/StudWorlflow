@@ -12,6 +12,8 @@ import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
 import { useAuth } from "@/context/auth-context"
 import { cn } from "@/lib/utils"
+import { apiUrl } from "@/lib/api"
+import { useAppAlert } from "@/components/app-alert-provider"
 
 interface ConversationSummary {
   id: string
@@ -46,6 +48,7 @@ interface ConversationResponse {
 
 export default function MessagesPage() {
   const { user } = useAuth()
+  const { showAlert } = useAppAlert()
   const searchParams = useSearchParams()
   const requestedProfileId = searchParams.get("profileId")
 
@@ -62,7 +65,7 @@ export default function MessagesPage() {
   const loadConversations = useCallback(async () => {
     if (!token) return []
 
-    const res = await fetch("http://localhost:3001/messages/conversations", {
+    const res = await fetch(apiUrl("/messages/conversations"), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -80,7 +83,7 @@ export default function MessagesPage() {
   const loadConversation = useCallback(async (profileId: string) => {
     if (!token) return null
 
-    const res = await fetch(`http://localhost:3001/messages/${profileId}`, {
+    const res = await fetch(apiUrl(`/messages/${profileId}`), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -190,7 +193,7 @@ export default function MessagesPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:3001/messages/${selectedConversation.profileId}`,
+        apiUrl(`/messages/${selectedConversation.profileId}`),
         {
           method: "POST",
           headers: {
@@ -206,7 +209,7 @@ export default function MessagesPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.message || "Не удалось отправить сообщение")
+        showAlert("Не удалось отправить сообщение", data.message || "Попробуй еще раз немного позже.")
         return
       }
 
@@ -216,7 +219,7 @@ export default function MessagesPage() {
       await loadConversation(selectedConversation.profileId)
     } catch (error) {
       console.error(error)
-      alert("Не удалось отправить сообщение")
+      showAlert("Ошибка отправки", "Сообщение не отправилось. Попробуй еще раз.")
     } finally {
       setSending(false)
     }

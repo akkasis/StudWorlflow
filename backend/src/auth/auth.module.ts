@@ -6,17 +6,13 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt.guard';
 import { ProfilesModule } from '../profiles/profiles.module';
+import { getJwtModuleOptions } from '../config/app.config';
 
 @Module({
   imports: [
     PrismaModule,
 
-    // 🔥 ДЕЛАЕМ ГЛОБАЛЬНЫМ
-    JwtModule.register({
-      global: true,
-      secret: 'super_secret_key',
-      signOptions: { expiresIn: '7d' },
-    }),
+    JwtModule.register(getJwtModuleOptions()),
 
     ProfilesModule,
   ],

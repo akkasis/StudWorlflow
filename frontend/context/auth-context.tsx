@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from "react"
+import { apiUrl } from "@/lib/api"
 
 interface User {
   id: string
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    fetch("http://localhost:3001/auth/me", {
+    fetch(apiUrl("/auth/me"), {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true)
 
     try {
-      const res = await fetch("http://localhost:3001/auth/me", {
+      const res = await fetch(apiUrl("/auth/me"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },

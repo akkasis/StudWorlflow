@@ -25,6 +25,8 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
 import { useAuth } from "@/context/auth-context"
+import { apiUrl } from "@/lib/api"
+import { useAppAlert } from "@/components/app-alert-provider"
 
 interface RecentReview {
   id: number
@@ -74,6 +76,7 @@ const formatOptions = [
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
+  const { showAlert } = useAppAlert()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([])
   const [newTag, setNewTag] = useState("")
@@ -90,12 +93,12 @@ export default function DashboardPage() {
     if (!token) return
 
     Promise.all([
-      fetch("http://localhost:3001/profiles/me", {
+      fetch(apiUrl("/profiles/me"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }).then((res) => res.json()),
-      fetch("http://localhost:3001/messages/conversations", {
+      fetch(apiUrl("/messages/conversations"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -195,7 +198,7 @@ export default function DashboardPage() {
 
     reader.onerror = () => {
       setAvatarLoading(false)
-      alert("Не удалось загрузить изображение")
+      showAlert("Ошибка загрузки", "Не удалось загрузить изображение. Попробуй выбрать другой файл.")
     }
 
     reader.readAsDataURL(file)
@@ -218,7 +221,7 @@ export default function DashboardPage() {
 
     reader.onerror = () => {
       setBannerLoading(false)
-      alert("Не удалось загрузить баннер")
+      showAlert("Ошибка загрузки", "Не удалось загрузить баннер. Попробуй выбрать другой файл.")
     }
 
     reader.readAsDataURL(file)
@@ -246,7 +249,7 @@ export default function DashboardPage() {
         payload.banner = profile.banner
       }
 
-      const res = await fetch("http://localhost:3001/profiles", {
+      const res = await fetch(apiUrl("/profiles"), {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -258,15 +261,15 @@ export default function DashboardPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        alert(data.message || "Не удалось сохранить профиль")
+        showAlert("Не удалось сохранить профиль", data.message || "Проверь заполнение полей и попробуй снова.")
         return
       }
 
       setProfile(data)
-      alert("Профиль сохранен")
+      showAlert("Готово", "Изменения в профиле успешно сохранены.")
     } catch (error) {
       console.error(error)
-      alert("Что-то пошло не так")
+      showAlert("Ошибка сервера", "Сейчас не удалось сохранить профиль. Попробуй еще раз чуть позже.")
     } finally {
       setIsSaving(false)
     }
@@ -336,7 +339,7 @@ export default function DashboardPage() {
               <div>
                 <h1 className="text-3xl font-bold">Личный кабинет</h1>
                 <p className="text-muted-foreground mt-1">
-                  Управляй профилем, сообщениями и своей активностью в studworkflow.
+                  Управляй профилем, сообщениями и своей активностью в Skillent.
                 </p>
               </div>
 

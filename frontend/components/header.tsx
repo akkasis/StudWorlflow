@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/auth-context"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
+import { apiUrl } from "@/lib/api"
 
 interface ConversationSummary {
   unreadCount: number
@@ -58,7 +59,7 @@ export function Header() {
 
     const loadSupportState = async () => {
       try {
-        const res = await fetch("http://localhost:3001/support/thread", {
+        const res = await fetch(apiUrl("/support/thread"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -104,7 +105,7 @@ export function Header() {
 
     const loadUnread = async () => {
       try {
-        const res = await fetch("http://localhost:3001/messages/conversations", {
+        const res = await fetch(apiUrl("/messages/conversations"), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -143,7 +144,7 @@ export function Header() {
               </div>
               <div className="leading-none">
                 <span className="text-xl font-bold tracking-tight">
-                  stud<span className="text-gradient">workflow</span>
+                  Skill<span className="text-gradient">ent</span>
                 </span>
                 <p className="mt-1 text-[11px] text-muted-foreground">
                   РАНХиГС

@@ -9,6 +9,7 @@ import { Footer } from "@/components/footer"
 import { StarRating } from "@/components/star-rating"
 import { ProfileActions } from "@/components/profile-actions"
 import { AddReview } from "@/components/add-review"
+import { apiUrl } from "@/lib/api"
 
 export const dynamic = "force-dynamic"
 
@@ -17,7 +18,7 @@ interface ProfilePageProps {
 }
 
 async function getProfile(id: string) {
-  const res = await fetch(`http://localhost:3001/profiles/${id}`, {
+  const res = await fetch(apiUrl(`/profiles/${id}`), {
     cache: "no-store",
   })
 
