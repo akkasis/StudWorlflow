@@ -4,7 +4,7 @@ const { join } = require('path')
 const { randomUUID } = require('crypto')
 
 const prisma = new PrismaClient()
-const dataDir = join(process.cwd(), 'data')
+const dataDir = process.env.DATA_DIR || join(process.cwd(), 'data')
 
 function readJson(filename, fallback) {
   const filePath = join(dataDir, filename)
@@ -213,6 +213,7 @@ async function migrateProfileMeta() {
 }
 
 async function main() {
+  console.log(`Reading JSON data from: ${dataDir}`)
   await migrateMessages()
   await migrateSupport()
   await migrateModeration()

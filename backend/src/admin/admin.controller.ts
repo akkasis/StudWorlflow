@@ -35,6 +35,12 @@ export class AdminController {
     return this.adminService.listUsers();
   }
 
+  @Get('users/:userId/context')
+  getUserContext(@Req() req: any, @Param('userId') userId: string) {
+    this.ensureModerator(req);
+    return this.adminService.getUserContext(Number(userId));
+  }
+
   @Patch('users/:userId')
   updateUser(@Req() req: any, @Param('userId') userId: string, @Body() body: any) {
     this.ensureModerator(req);

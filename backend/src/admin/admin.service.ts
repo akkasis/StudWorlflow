@@ -59,6 +59,164 @@ export class AdminService {
     );
   }
 
+  async getUserContext(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Пользователь не найден');
+    }
+
+    const moderation = await this.moderationService.getUserState(userId);
+    const availability = user.profile
+      ? await this.profileMetaService.getAvailability(user.profile.id)
+      : null;
+    const banner = user.profile
+      ? await this.profileMetaService.getBanner(user.profile.id)
+      : null;
+
+    const supportMessages = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        senderUserId: number;
+        text: string;
+        createdAt: Date;
+      }>
+    >`
+      SELECT
+        "id",
+        "senderUserId",
+        "text",
+        "createdAt"
+      FROM "SupportMessage"
+      WHERE "threadUserId" = ${userId}
+      ORDER BY "createdAt" DESC
+      LIMIT 8
+    `;
+
+    const conversationRows = user.profile
+      ? await this.prisma.$queryRaw<
+          Array<{
+            id: string;
+            participantOneProfileId: number;
+            participantTwoProfileId: number;
+            updatedAt: Date;
+          }>
+        >`
+          SELECT
+            "id",
+            "participantOneProfileId",
+            "participantTwoProfileId",
+            "updatedAt"
+          FROM "Conversation"
+          WHERE
+            "participantOneProfileId" = ${user.profile.id}
+            OR "participantTwoProfileId" = ${user.profile.id}
+          ORDER BY "updatedAt" DESC
+          LIMIT 8
+        `
+      : [];
+
+    const partnerProfileIds = conversationRows.map((conversation) =>
+      conversation.participantOneProfileId === user.profile?.id
+        ? conversation.participantTwoProfileId
+        : conversation.participantOneProfileId,
+    );
+
+    const partnerProfiles = partnerProfileIds.length
+      ? await this.prisma.profile.findMany({
+          where: {
+            id: {
+              in: partnerProfileIds,
+            },
+          },
+          include: {
+            user: {
+              select: {
+                email: true,
+                role: true,
+              },
+            },
+          },
+        })
+      : [];
+
+    const partnersById = new Map(partnerProfiles.map((profile) => [profile.id, profile]));
+
+    const recentConversations = await Promise.all(
+      conversationRows.map(async (conversation) => {
+        const [lastMessage] = await this.prisma.$queryRaw<
+          Array<{
+            text: string;
+            createdAt: Date;
+            senderUserId: number;
+          }>
+        >`
+          SELECT
+            "text",
+            "createdAt",
+            "senderUserId"
+          FROM "Message"
+          WHERE "conversationId" = ${conversation.id}
+          ORDER BY "createdAt" DESC
+          LIMIT 1
+        `;
+
+        const partnerProfileId =
+          conversation.participantOneProfileId === user.profile?.id
+            ? conversation.participantTwoProfileId
+            : conversation.participantOneProfileId;
+        const partner = partnersById.get(partnerProfileId);
+
+        return {
+          id: conversation.id,
+          partnerName: partner?.name || partner?.user.email || 'Пользователь',
+          partnerEmail: partner?.user.email || '',
+          partnerRole: partner?.user.role || partner?.role || 'student',
+          lastMessage: lastMessage?.text || '',
+          updatedAt: lastMessage?.createdAt || conversation.updatedAt,
+        };
+      }),
+    );
+
+    return {
+      user: {
+        id: String(user.id),
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        tutorVerified: moderation.tutorVerified || false,
+        ban: moderation.ban || null,
+      },
+      profile: user.profile
+        ? {
+            id: String(user.profile.id),
+            name: user.profile.name,
+            university: user.profile.university,
+            course: user.profile.course,
+            role: user.profile.role,
+            rating: user.profile.rating,
+            description: user.profile.description,
+            pricePerHour: user.profile.priceFrom,
+            avatar: user.profile.avatarUrl,
+            banner,
+            availability,
+          }
+        : null,
+      supportMessages: supportMessages.map((message) => ({
+        id: message.id,
+        senderUserId: message.senderUserId,
+        text: message.text,
+        createdAt: message.createdAt,
+      })),
+      recentConversations,
+    };
+  }
+
   async listReviews() {
     const reviews = await this.prisma.review.findMany({
       include: {
