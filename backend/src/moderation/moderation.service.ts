@@ -1,6 +1,5 @@
 import { Global, Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { PrismaService } from '../prisma/prisma.service';
 
 export type UserRole = 'student' | 'tutor' | 'moderator' | 'admin';
 
@@ -19,91 +18,201 @@ export interface ReviewModerationState {
   verified?: boolean;
 }
 
-interface ModerationStore {
-  users: Record<string, UserModerationState>;
-  reviews: Record<string, ReviewModerationState>;
-}
-
 @Global()
 @Injectable()
 export class ModerationService {
-  private readonly storePath = join(process.cwd(), 'data', 'moderation.json');
+  constructor(private prisma: PrismaService) {}
 
-  async getUserState(userId: number) {
-    const store = await this.readStore();
-    return store.users[String(userId)] || {};
+  async getUserState(userId: number): Promise<UserModerationState> {
+    const [state] = await this.prisma.$queryRaw<
+      Array<{
+        userId: number;
+        tutorVerified: boolean;
+        banPermanent: boolean;
+        banUntil: Date | null;
+        banReason: string | null;
+      }>
+    >`
+      SELECT
+        "userId",
+        "tutorVerified",
+        "banPermanent",
+        "banUntil",
+        "banReason"
+      FROM "UserModerationState"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
+
+    if (!state) {
+      return {};
+    }
+
+    const hasBan = state.banPermanent || state.banUntil || state.banReason;
+
+    return {
+      tutorVerified: state.tutorVerified,
+      ban: hasBan
+        ? {
+            permanent: state.banPermanent || undefined,
+            until: state.banUntil?.toISOString() || null,
+            reason: state.banReason || null,
+          }
+        : null,
+    };
   }
 
   async setUserState(userId: number, state: UserModerationState) {
-    const store = await this.readStore();
-    store.users[String(userId)] = {
-      ...(store.users[String(userId)] || {}),
-      ...state,
+    const tutorVerified = state.tutorVerified ?? false;
+    const banPermanent = Boolean(state.ban?.permanent);
+    const banUntil = state.ban?.until ? new Date(state.ban.until) : null;
+    const banReason = state.ban?.reason || null;
+
+    const [saved] = await this.prisma.$queryRaw<
+      Array<{
+        userId: number;
+        tutorVerified: boolean;
+        banPermanent: boolean;
+        banUntil: Date | null;
+        banReason: string | null;
+      }>
+    >`
+      INSERT INTO "UserModerationState" (
+        "userId",
+        "tutorVerified",
+        "banPermanent",
+        "banUntil",
+        "banReason"
+      )
+      VALUES (
+        ${userId},
+        ${tutorVerified},
+        ${banPermanent},
+        ${banUntil},
+        ${banReason}
+      )
+      ON CONFLICT ("userId")
+      DO UPDATE SET
+        "tutorVerified" = EXCLUDED."tutorVerified",
+        "banPermanent" = EXCLUDED."banPermanent",
+        "banUntil" = EXCLUDED."banUntil",
+        "banReason" = EXCLUDED."banReason"
+      RETURNING
+        "userId",
+        "tutorVerified",
+        "banPermanent",
+        "banUntil",
+        "banReason"
+    `;
+
+    return {
+      tutorVerified: saved.tutorVerified,
+      ban:
+        saved.banPermanent || saved.banUntil || saved.banReason
+          ? {
+              permanent: saved.banPermanent || undefined,
+              until: saved.banUntil?.toISOString() || null,
+              reason: saved.banReason || null,
+            }
+          : null,
     };
-    await this.writeStore(store);
-    return store.users[String(userId)];
   }
 
-  async getReviewState(reviewId: number) {
-    const store = await this.readStore();
-    return store.reviews[String(reviewId)] || {};
+  async getReviewState(reviewId: number): Promise<ReviewModerationState> {
+    const [state] = await this.prisma.$queryRaw<
+      Array<{
+        reviewId: number;
+        verified: boolean;
+      }>
+    >`
+      SELECT
+        "reviewId",
+        "verified"
+      FROM "ReviewModerationState"
+      WHERE "reviewId" = ${reviewId}
+      LIMIT 1
+    `;
+
+    if (!state) {
+      return {};
+    }
+
+    return {
+      verified: state.verified,
+    };
   }
 
   async setReviewState(reviewId: number, state: ReviewModerationState) {
-    const store = await this.readStore();
-    store.reviews[String(reviewId)] = {
-      ...(store.reviews[String(reviewId)] || {}),
-      ...state,
+    const [saved] = await this.prisma.$queryRaw<
+      Array<{
+        reviewId: number;
+        verified: boolean;
+      }>
+    >`
+      INSERT INTO "ReviewModerationState" (
+        "reviewId",
+        "verified"
+      )
+      VALUES (
+        ${reviewId},
+        ${state.verified ?? false}
+      )
+      ON CONFLICT ("reviewId")
+      DO UPDATE SET
+        "verified" = EXCLUDED."verified"
+      RETURNING
+        "reviewId",
+        "verified"
+    `;
+
+    return {
+      verified: saved.verified,
     };
-    await this.writeStore(store);
-    return store.reviews[String(reviewId)];
   }
 
   async isUserBanned(userId: number) {
-    const state = await this.getUserState(userId);
-    const ban = state.ban;
+    const [state] = await this.prisma.$queryRaw<
+      Array<{
+        banPermanent: boolean;
+        banUntil: Date | null;
+      }>
+    >`
+      SELECT
+        "banPermanent",
+        "banUntil"
+      FROM "UserModerationState"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
 
-    if (!ban) {
+    if (!state) {
       return false;
     }
 
-    if (ban.permanent) {
+    if (state.banPermanent) {
       return true;
     }
 
-    if (ban.until) {
-      return new Date(ban.until).getTime() > Date.now();
+    if (state.banUntil) {
+      return state.banUntil.getTime() > Date.now();
     }
 
     return false;
   }
 
   async getBanReason(userId: number) {
-    const state = await this.getUserState(userId);
-    return state.ban?.reason || null;
-  }
+    const [state] = await this.prisma.$queryRaw<
+      Array<{
+        banReason: string | null;
+      }>
+    >`
+      SELECT
+        "banReason"
+      FROM "UserModerationState"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
 
-  private async readStore(): Promise<ModerationStore> {
-    await fs.mkdir(join(process.cwd(), 'data'), { recursive: true });
-
-    try {
-      const raw = await fs.readFile(this.storePath, 'utf8');
-      return JSON.parse(raw) as ModerationStore;
-    } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        const emptyStore: ModerationStore = {
-          users: {},
-          reviews: {},
-        };
-        await this.writeStore(emptyStore);
-        return emptyStore;
-      }
-
-      throw error;
-    }
-  }
-
-  private async writeStore(store: ModerationStore) {
-    await fs.writeFile(this.storePath, JSON.stringify(store, null, 2), 'utf8');
+    return state?.banReason || null;
   }
 }

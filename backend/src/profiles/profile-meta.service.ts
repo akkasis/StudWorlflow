@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 export interface TutorAvailability {
   formats: string[];
@@ -9,26 +9,63 @@ export interface TutorAvailability {
   note: string;
 }
 
-interface ProfileMetaStore {
-  availability: Record<string, TutorAvailability>;
-  banners: Record<string, string>;
-}
-
 @Injectable()
 export class ProfileMetaService {
-  private readonly storePath = join(process.cwd(), 'data', 'profile-meta.json');
+  constructor(private prisma: PrismaService) {}
 
   async getAvailability(profileId: number): Promise<TutorAvailability | null> {
-    const store = await this.readStore();
-    return store.availability[String(profileId)] || null;
+    const [profile] = await this.prisma.$queryRaw<
+      Array<{
+        availabilityFormats: string[];
+        availabilityDays: string[];
+        availabilityTime: string | null;
+        availabilityNote: string | null;
+      }>
+    >`
+      SELECT
+        "availabilityFormats",
+        "availabilityDays",
+        "availabilityTime",
+        "availabilityNote"
+      FROM "Profile"
+      WHERE "id" = ${profileId}
+      LIMIT 1
+    `;
+
+    if (!profile) {
+      return null;
+    }
+
+    const normalized: TutorAvailability = {
+      formats: profile.availabilityFormats || [],
+      primeDays: profile.availabilityDays || [],
+      primeTime: profile.availabilityTime || '',
+      note: profile.availabilityNote || '',
+    };
+
+    const hasContent =
+      normalized.formats.length > 0 ||
+      normalized.primeDays.length > 0 ||
+      Boolean(normalized.primeTime) ||
+      Boolean(normalized.note);
+
+    return hasContent ? normalized : null;
   }
 
-  async setAvailability(profileId: number, availability?: Partial<TutorAvailability>) {
-    const store = await this.readStore();
-
+  async setAvailability(
+    profileId: number,
+    availability?: Partial<TutorAvailability>,
+  ) {
     if (!availability) {
-      delete store.availability[String(profileId)];
-      await this.writeStore(store);
+      await this.prisma.$executeRaw`
+        UPDATE "Profile"
+        SET
+          "availabilityFormats" = ARRAY[]::TEXT[],
+          "availabilityDays" = ARRAY[]::TEXT[],
+          "availabilityTime" = NULL,
+          "availabilityNote" = NULL
+        WHERE "id" = ${profileId}
+      `;
       return null;
     }
 
@@ -46,61 +83,56 @@ export class ProfileMetaService {
       Boolean(normalized.note);
 
     if (!hasContent) {
-      delete store.availability[String(profileId)];
-      await this.writeStore(store);
+      await this.prisma.$executeRaw`
+        UPDATE "Profile"
+        SET
+          "availabilityFormats" = ARRAY[]::TEXT[],
+          "availabilityDays" = ARRAY[]::TEXT[],
+          "availabilityTime" = NULL,
+          "availabilityNote" = NULL
+        WHERE "id" = ${profileId}
+      `;
       return null;
     }
 
-    store.availability[String(profileId)] = normalized;
-    await this.writeStore(store);
+    await this.prisma.$executeRaw`
+      UPDATE "Profile"
+      SET
+        "availabilityFormats" = ARRAY[${Prisma.join(normalized.formats)}]::TEXT[],
+        "availabilityDays" = ARRAY[${Prisma.join(normalized.primeDays)}]::TEXT[],
+        "availabilityTime" = ${normalized.primeTime || null},
+        "availabilityNote" = ${normalized.note || null}
+      WHERE "id" = ${profileId}
+    `;
+
     return normalized;
   }
 
   async getBanner(profileId: number): Promise<string | null> {
-    const store = await this.readStore();
-    return store.banners[String(profileId)] || null;
+    const [profile] = await this.prisma.$queryRaw<
+      Array<{
+        bannerUrl: string | null;
+      }>
+    >`
+      SELECT
+        "bannerUrl"
+      FROM "Profile"
+      WHERE "id" = ${profileId}
+      LIMIT 1
+    `;
+
+    return profile?.bannerUrl || null;
   }
 
   async setBanner(profileId: number, banner?: string | null) {
-    const store = await this.readStore();
-    const normalized = banner?.trim();
+    const normalized = banner?.trim() || null;
 
-    if (!normalized) {
-      delete store.banners[String(profileId)];
-      await this.writeStore(store);
-      return null;
-    }
+    await this.prisma.$executeRaw`
+      UPDATE "Profile"
+      SET "bannerUrl" = ${normalized}
+      WHERE "id" = ${profileId}
+    `;
 
-    store.banners[String(profileId)] = normalized;
-    await this.writeStore(store);
     return normalized;
-  }
-
-  private async readStore(): Promise<ProfileMetaStore> {
-    await fs.mkdir(join(process.cwd(), 'data'), { recursive: true });
-
-    try {
-      const raw = await fs.readFile(this.storePath, 'utf8');
-      const parsed = JSON.parse(raw) as Partial<ProfileMetaStore>;
-      return {
-        availability: parsed.availability || {},
-        banners: parsed.banners || {},
-      };
-    } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        const emptyStore: ProfileMetaStore = {
-          availability: {},
-          banners: {},
-        };
-        await this.writeStore(emptyStore);
-        return emptyStore;
-      }
-
-      throw error;
-    }
-  }
-
-  private async writeStore(store: ProfileMetaStore) {
-    await fs.writeFile(this.storePath, JSON.stringify(store, null, 2), 'utf8');
   }
 }

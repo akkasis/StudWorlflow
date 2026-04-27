@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { promises as fs } from 'fs';
-import { join } from 'path';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface SupportMessage {
@@ -30,23 +29,36 @@ export interface SupportThreadResponse {
   messages: SupportMessage[];
 }
 
-interface SupportStore {
-  threads: SupportThread[];
-}
-
 @Injectable()
 export class SupportService {
-  private readonly storePath = join(process.cwd(), 'data', 'support.json');
-
   constructor(private prisma: PrismaService) {}
 
   async listThreads() {
-    const store = await this.readStore();
-    const userIds = store.threads.map((thread) => thread.userId);
+    const threads = await this.prisma.$queryRaw<
+      Array<{
+        userId: number;
+        updatedAt: Date;
+        lastMessage: string | null;
+      }>
+    >`
+      SELECT
+        st."userId",
+        st."updatedAt",
+        (
+          SELECT sm."text"
+          FROM "SupportMessage" sm
+          WHERE sm."threadUserId" = st."userId"
+          ORDER BY sm."createdAt" DESC
+          LIMIT 1
+        ) AS "lastMessage"
+      FROM "SupportThread" st
+      ORDER BY st."updatedAt" DESC
+    `;
+
     const users = await this.prisma.user.findMany({
       where: {
         id: {
-          in: userIds,
+          in: threads.map((thread) => thread.userId),
         },
       },
       include: {
@@ -56,104 +68,177 @@ export class SupportService {
 
     const usersById = new Map(users.map((user) => [user.id, user]));
 
-    return store.threads
-      .sort(
-        (a, b) =>
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-      )
-      .map((thread) => {
-        const user = usersById.get(thread.userId);
-        const lastMessage = thread.messages[thread.messages.length - 1];
-        return {
-          userId: String(thread.userId),
-          email: user?.email || 'unknown',
-          name: user?.profile?.name || user?.email || 'Пользователь',
-          lastMessage: lastMessage?.text || '',
-          updatedAt: thread.updatedAt,
-        };
-      });
+    return threads.map((thread) => {
+      const user = usersById.get(thread.userId);
+
+      return {
+        userId: String(thread.userId),
+        email: user?.email || 'unknown',
+        name: user?.profile?.name || user?.email || 'Пользователь',
+        lastMessage: thread.lastMessage || '',
+        updatedAt: thread.updatedAt,
+      };
+    });
   }
 
   async getThreadForUser(userId: number) {
-    const store = await this.readStore();
-    const thread = this.getOrCreateThread(store, userId);
-    await this.writeStore(store);
+    const thread = await this.getOrCreateThread(userId);
+    const messages = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        senderUserId: number;
+        text: string;
+        createdAt: Date;
+      }>
+    >`
+      SELECT
+        "id",
+        "senderUserId",
+        "text",
+        "createdAt"
+      FROM "SupportMessage"
+      WHERE "threadUserId" = ${userId}
+      ORDER BY "createdAt" ASC
+    `;
 
     return {
       userId: String(thread.userId),
-      messages: thread.messages,
+      messages: messages.map((message) => ({
+        id: message.id,
+        senderUserId: message.senderUserId,
+        text: message.text,
+        createdAt: message.createdAt.toISOString(),
+      })),
     };
   }
 
   async sendUserMessage(userId: number, text: string) {
-    const store = await this.readStore();
-    const thread = this.getOrCreateThread(store, userId);
-    const message = this.createMessage(userId, text);
-    thread.messages.push(message);
-    thread.updatedAt = message.createdAt;
-    await this.writeStore(store);
-    return message;
+    await this.getOrCreateThread(userId);
+    const normalized = this.normalizeText(text);
+
+    const [message] = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        senderUserId: number;
+        text: string;
+        createdAt: Date;
+      }>
+    >`
+      INSERT INTO "SupportMessage" (
+        "id",
+        "threadUserId",
+        "senderUserId",
+        "text"
+      )
+      VALUES (
+        ${randomUUID()},
+        ${userId},
+        ${userId},
+        ${normalized}
+      )
+      RETURNING
+        "id",
+        "senderUserId",
+        "text",
+        "createdAt"
+    `;
+
+    await this.prisma.$executeRaw`
+      UPDATE "SupportThread"
+      SET "updatedAt" = ${message.createdAt}
+      WHERE "userId" = ${userId}
+    `;
+
+    return {
+      id: message.id,
+      senderUserId: message.senderUserId,
+      text: message.text,
+      createdAt: message.createdAt.toISOString(),
+    };
   }
 
-  async sendModeratorReply(targetUserId: number, moderatorUserId: number, text: string) {
-    const store = await this.readStore();
-    const thread = this.getOrCreateThread(store, targetUserId);
-    const message = this.createMessage(moderatorUserId, text);
-    thread.messages.push(message);
-    thread.updatedAt = message.createdAt;
-    await this.writeStore(store);
-    return message;
+  async sendModeratorReply(
+    targetUserId: number,
+    moderatorUserId: number,
+    text: string,
+  ) {
+    await this.getOrCreateThread(targetUserId);
+    const normalized = this.normalizeText(text);
+
+    const [message] = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        senderUserId: number;
+        text: string;
+        createdAt: Date;
+      }>
+    >`
+      INSERT INTO "SupportMessage" (
+        "id",
+        "threadUserId",
+        "senderUserId",
+        "text"
+      )
+      VALUES (
+        ${randomUUID()},
+        ${targetUserId},
+        ${moderatorUserId},
+        ${normalized}
+      )
+      RETURNING
+        "id",
+        "senderUserId",
+        "text",
+        "createdAt"
+    `;
+
+    await this.prisma.$executeRaw`
+      UPDATE "SupportThread"
+      SET "updatedAt" = ${message.createdAt}
+      WHERE "userId" = ${targetUserId}
+    `;
+
+    return {
+      id: message.id,
+      senderUserId: message.senderUserId,
+      text: message.text,
+      createdAt: message.createdAt.toISOString(),
+    };
   }
 
-  private createMessage(senderUserId: number, text: string): SupportMessage {
+  private normalizeText(text: string) {
     const normalized = text.trim();
+
     if (!normalized) {
       throw new BadRequestException('Сообщение не может быть пустым');
     }
 
-    return {
-      id: String(Date.now()),
-      senderUserId,
-      text: normalized,
-      createdAt: new Date().toISOString(),
-    };
+    return normalized;
   }
 
-  private getOrCreateThread(store: SupportStore, userId: number) {
-    let thread = store.threads.find((item) => item.userId === userId);
-    if (!thread) {
-      const now = new Date().toISOString();
-      thread = {
-        userId,
-        messages: [],
-        createdAt: now,
-        updatedAt: now,
-      };
-      store.threads.push(thread);
-    }
+  private async getOrCreateThread(userId: number) {
+    await this.prisma.$executeRaw`
+      INSERT INTO "SupportThread" ("userId")
+      VALUES (${userId})
+      ON CONFLICT ("userId") DO NOTHING
+    `;
+
+    const [thread] = await this.prisma.$queryRaw<
+      Array<{
+        userId: number;
+        createdAt: Date;
+        updatedAt: Date;
+      }>
+    >`
+      SELECT
+        "userId",
+        "createdAt",
+        "updatedAt"
+      FROM "SupportThread"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
+
     return thread;
-  }
-
-  private async readStore(): Promise<SupportStore> {
-    await fs.mkdir(join(process.cwd(), 'data'), { recursive: true });
-
-    try {
-      const raw = await fs.readFile(this.storePath, 'utf8');
-      return JSON.parse(raw) as SupportStore;
-    } catch (error: unknown) {
-      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        const emptyStore: SupportStore = {
-          threads: [],
-        };
-        await this.writeStore(emptyStore);
-        return emptyStore;
-      }
-
-      throw error;
-    }
-  }
-
-  private async writeStore(store: SupportStore) {
-    await fs.writeFile(this.storePath, JSON.stringify(store, null, 2), 'utf8');
   }
 }
