@@ -99,9 +99,9 @@ docker compose version
 
 ### Шаг 5. Купить домен
 
-Нужен:
-- основной домен, например `studworkflow.ru`
-- поддомен API, например `api.studworkflow.ru`
+Нужен один основной домен, например:
+- `skillent.ru`
+- или любой другой, который ты выберешь
 
 ### Шаг 6. Настроить DNS
 
@@ -109,7 +109,6 @@ docker compose version
 
 - `@` -> IP сервера
 - `www` -> IP сервера
-- `api` -> IP сервера
 
 Подожди, пока DNS применится. Иногда это 5 минут, иногда до нескольких часов.
 
@@ -161,7 +160,7 @@ PORT=3001
 DATABASE_URL=postgresql://studworkflow:SUPER_DB_PASSWORD@postgres:5432/studworkflow?schema=public
 JWT_SECRET=LONG_RANDOM_SECRET_WITH_32_PLUS_CHARACTERS
 JWT_EXPIRES_IN=7d
-CORS_ORIGIN=https://studworkflow.ru,https://www.studworkflow.ru
+CORS_ORIGIN=https://skillent.ru,https://www.skillent.ru
 ROOT_ADMIN_EMAIL=your-real-admin-email@example.com
 ROOT_ADMIN_PASSWORD=SUPER_STRONG_ADMIN_PASSWORD
 ```
@@ -188,7 +187,7 @@ nano deploy/frontend.env.production
 Пропиши:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.studworkflow.ru
+NEXT_PUBLIC_API_URL=https://skillent.ru/api
 ```
 
 ### Шаг 11. Создать root `.env` для docker compose
@@ -269,14 +268,14 @@ systemctl start nginx
 Создай конфиг:
 
 ```bash
-nano /etc/nginx/sites-available/studworkflow
+nano /etc/nginx/sites-available/skillent
 ```
 
 Вставь:
 
 ```nginx
 server {
-    server_name studworkflow.ru www.studworkflow.ru;
+    server_name skillent.ru www.skillent.ru;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -286,25 +285,9 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-}
-```
-
-### Шаг 18. Настроить API-домен
-
-Создай второй конфиг:
-
-```bash
-nano /etc/nginx/sites-available/studworkflow-api
-```
-
-Вставь:
-
-```nginx
-server {
-    server_name api.studworkflow.ru;
-
-    location / {
-        proxy_pass http://127.0.0.1:3001;
+    
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -317,8 +300,7 @@ server {
 ### Шаг 19. Активировать конфиги
 
 ```bash
-ln -s /etc/nginx/sites-available/studworkflow /etc/nginx/sites-enabled/
-ln -s /etc/nginx/sites-available/studworkflow-api /etc/nginx/sites-enabled/
+ln -s /etc/nginx/sites-available/skillent /etc/nginx/sites-enabled/
 nginx -t
 systemctl reload nginx
 ```
@@ -334,8 +316,7 @@ apt install -y certbot python3-certbot-nginx
 Выпусти сертификаты:
 
 ```bash
-certbot --nginx -d studworkflow.ru -d www.studworkflow.ru
-certbot --nginx -d api.studworkflow.ru
+certbot --nginx -d skillent.ru -d www.skillent.ru
 ```
 
 ---
@@ -344,8 +325,8 @@ certbot --nginx -d api.studworkflow.ru
 
 После SSL проверь:
 
-- `https://studworkflow.ru`
-- `https://api.studworkflow.ru/health`
+- `https://skillent.ru`
+- `https://skillent.ru/api/health`
 
 Если фронт открылся, а логин/регистрация не работают:
 - скорее всего неверный `NEXT_PUBLIC_API_URL`
@@ -440,8 +421,8 @@ npx prisma migrate deploy
 - `JWT_SECRET` заменен
 - root admin пароль заменен
 - `docker compose ... up -d` выполнен
-- `https://api.studworkflow.ru/health` отвечает
-- `https://studworkflow.ru` открывается
+- `https://skillent.ru/api/health` отвечает
+- `https://skillent.ru` открывается
 
 ---
 
