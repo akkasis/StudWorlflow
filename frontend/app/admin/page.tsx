@@ -68,6 +68,13 @@ export default function AdminPage() {
       }),
     ])
 
+    if (!overviewRes.ok || !usersRes.ok || !reviewsRes.ok) {
+      setOverview(null)
+      setUsers([])
+      setReviews([])
+      return
+    }
+
     setOverview(await overviewRes.json())
     setUsers(await usersRes.json())
     setReviews(await reviewsRes.json())

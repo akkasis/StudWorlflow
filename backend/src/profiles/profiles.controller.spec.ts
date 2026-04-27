@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ProfilesController } from './profiles.controller';
 import { ProfilesService } from './profiles.service';
 import { ModerationService } from '../moderation/moderation.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('ProfilesController', () => {
   let controller: ProfilesController;
@@ -21,6 +22,10 @@ describe('ProfilesController', () => {
         },
         {
           provide: ModerationService,
+          useValue: {},
+        },
+        {
+          provide: PrismaService,
           useValue: {},
         },
       ],

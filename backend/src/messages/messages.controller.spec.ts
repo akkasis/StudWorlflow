@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { MessagesController } from './messages.controller';
 import { MessagesService } from './messages.service';
 import { ModerationService } from '../moderation/moderation.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('MessagesController', () => {
   let controller: MessagesController;
@@ -21,6 +22,10 @@ describe('MessagesController', () => {
         },
         {
           provide: ModerationService,
+          useValue: {},
+        },
+        {
+          provide: PrismaService,
           useValue: {},
         },
       ],

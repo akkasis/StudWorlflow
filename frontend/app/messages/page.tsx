@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Send, ArrowLeft, MoreVertical, MessageSquare } from "lucide-react"
@@ -59,6 +59,7 @@ function MessagesPageContent() {
   const [showConversations, setShowConversations] = useState(true)
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
+  const bottomRef = useRef<HTMLDivElement | null>(null)
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
@@ -185,6 +186,10 @@ function MessagesPageContent() {
 
     return () => window.clearInterval(interval)
   }, [loadConversation, loadConversations, selectedConversation, token])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messagesList])
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation || !token) return
@@ -404,6 +409,7 @@ function MessagesPageContent() {
                         </div>
                       </div>
                     ))}
+                    <div ref={bottomRef} />
                   </div>
                 </ScrollArea>
 

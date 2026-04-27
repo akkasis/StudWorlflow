@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Send, LifeBuoy } from "lucide-react"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
@@ -32,6 +32,7 @@ export default function SupportPage() {
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
   const [messages, setMessages] = useState<SupportMessage[]>([])
   const [text, setText] = useState("")
+  const bottomRef = useRef<HTMLDivElement | null>(null)
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
   const isModerator = user?.role === "admin" || user?.role === "moderator"
@@ -78,6 +79,21 @@ export default function SupportPage() {
     if (!activeThreadId && isModerator) return
     void loadMessages(activeThreadId)
   }, [activeThreadId, isModerator])
+
+  useEffect(() => {
+    if (!token) return
+
+    const interval = window.setInterval(() => {
+      void loadThreads()
+      void loadMessages(activeThreadId)
+    }, 5000)
+
+    return () => window.clearInterval(interval)
+  }, [activeThreadId, token, isModerator])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
+  }, [messages])
 
   const sendMessage = async () => {
     if (!token || !text.trim()) return
@@ -175,6 +191,7 @@ export default function SupportPage() {
                     </div>
                   </div>
                 ))}
+                <div ref={bottomRef} />
               </div>
             </ScrollArea>
 
