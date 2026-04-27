@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Sparkles } from "lucide-react"
+import { GraduationCap } from "lucide-react"
 
 export function Footer() {
   return (
@@ -10,34 +10,34 @@ export function Footer() {
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary glow-primary">
-                <Sparkles className="h-5 w-5 text-primary-foreground" />
+                <GraduationCap className="h-5 w-5 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold tracking-tight text-foreground">
-                Peer<span className="text-gradient">Hub</span>
+                stud<span className="text-gradient">workflow</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              The modern marketplace connecting students for peer tutoring, mentorship, and academic success.
+              Платформа, где студенты находят тьюторов, договариваются о занятиях и помогают друг другу учиться эффективнее.
             </p>
           </div>
 
           {/* Product */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Product</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Платформа</h3>
             <ul className="space-y-3">
               <li>
                 <Link href="/marketplace" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Explore Tutors
+                  Каталог тьюторов
                 </Link>
               </li>
               <li>
                 <Link href="/signup" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Become a Tutor
+                  Стать тьютором
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Pricing
+                  Тарифы
                 </Link>
               </li>
             </ul>
@@ -45,26 +45,26 @@ export function Footer() {
 
           {/* Subjects */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Subjects</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Направления</h3>
             <ul className="space-y-3">
               <li>
                 <Link href="/marketplace?tag=programming" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Programming
+                  Программирование
                 </Link>
               </li>
               <li>
                 <Link href="/marketplace?tag=math" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Mathematics
+                  Математика
                 </Link>
               </li>
               <li>
                 <Link href="/marketplace?tag=writing" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Writing
+                  Письмо
                 </Link>
               </li>
               <li>
                 <Link href="/marketplace?tag=science" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Science
+                  Естественные науки
                 </Link>
               </li>
             </ul>
@@ -72,21 +72,21 @@ export function Footer() {
 
           {/* Company */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Legal</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">Документы</h3>
             <ul className="space-y-3">
               <li>
                 <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Privacy
+                  Конфиденциальность
                 </Link>
               </li>
               <li>
                 <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Terms
+                  Условия
                 </Link>
               </li>
               <li>
-                <Link href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Contact
+                <Link href="/help" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+                  Помощь
                 </Link>
               </li>
             </ul>
@@ -95,7 +95,7 @@ export function Footer() {
 
         <div className="mt-12 pt-8 border-t border-border/50 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} PeerHub. All rights reserved.
+            &copy; {new Date().getFullYear()} studworkflow. Все права защищены.
           </p>
           <div className="flex items-center gap-4">
             <Link href="#" className="text-muted-foreground hover:text-foreground transition-colors">

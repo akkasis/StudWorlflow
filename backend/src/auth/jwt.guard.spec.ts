@@ -1,7 +1,14 @@
-import { JwtGuard } from './jwt.guard';
+import { JwtService } from '@nestjs/jwt';
+import { JwtAuthGuard } from './jwt.guard';
+import { ModerationService } from '../moderation/moderation.service';
 
-describe('JwtGuard', () => {
+describe('JwtAuthGuard', () => {
   it('should be defined', () => {
-    expect(new JwtGuard()).toBeDefined();
+    expect(
+      new JwtAuthGuard(
+        {} as JwtService,
+        { isUserBanned: jest.fn() } as unknown as ModerationService,
+      ),
+    ).toBeDefined();
   });
 });

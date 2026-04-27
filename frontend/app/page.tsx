@@ -51,30 +51,30 @@ export default function HomePage() {
 
               <Badge className="mb-6 px-4 py-2 bg-secondary border-border/50 text-muted-foreground">
                 <Zap className="h-3.5 w-3.5 mr-2 text-primary" />
-                Trusted by students
+                Выбирают студенты
               </Badge>
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
-                Learn from peers who{" "}
-                <span className="text-gradient">get it</span>
+                Найди тьютора, который{" "}
+                <span className="text-gradient">реально понимает</span>
               </h1>
               
               <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Connect with student tutors who aced your courses.
+                Общайся со студентами-тьюторами, которые уже отлично прошли твои предметы.
               </p>
 
               <div className="mt-10 flex gap-3 max-w-xl mx-auto">
                 <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    placeholder="What do you need help with?"
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                    placeholder="С чем нужна помощь?"
                     className="pl-12 h-14"
                   />
                 </div>
 
                 <Link href="/marketplace">
                   <Button size="lg">
-                    Find Tutors
+                    Найти тьютора
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -89,7 +89,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4">
 
             <h2 className="text-3xl font-bold mb-10">
-              Featured tutors
+              Популярные тьюторы
             </h2>
 
             {loading && <p>Загрузка...</p>}

@@ -1,0 +1,16 @@
+{
+  "users": {
+    "7": {
+      "tutorVerified": true,
+      "ban": null
+    }
+  },
+  "reviews": {
+    "6": {
+      "verified": true
+    },
+    "8": {
+      "verified": true
+    }
+  }
+}

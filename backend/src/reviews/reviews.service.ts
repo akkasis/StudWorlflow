@@ -10,6 +10,50 @@ export class ReviewsService {
       throw new BadRequestException('Rating must be between 1 and 5');
     }
 
+    const [author, profile] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      }),
+      this.prisma.profile.findUnique({
+        where: { id: data.profileId },
+        select: { id: true, userId: true, role: true },
+      }),
+    ]);
+
+    if (!author) {
+      throw new BadRequestException('User not found');
+    }
+
+    if (!profile) {
+      throw new BadRequestException('Profile not found');
+    }
+
+    if (author.role !== 'student') {
+      throw new BadRequestException('Only students can leave reviews');
+    }
+
+    if (profile.role !== 'tutor') {
+      throw new BadRequestException('Reviews can only be left for tutors');
+    }
+
+    if (profile.userId === userId) {
+      throw new BadRequestException('You cannot review yourself');
+    }
+
+    const existingReview = await this.prisma.review.findFirst({
+      where: {
+        userId,
+        profileId: data.profileId,
+      },
+    });
+
+    if (existingReview) {
+      throw new BadRequestException(
+        'You have already left a review for this tutor',
+      );
+    }
+
     const review = await this.prisma.review.create({
       data: {
         rating: data.rating,
@@ -40,8 +84,12 @@ export class ReviewsService {
       where: { profileId },
       include: {
         user: {
-          select: {
-            email: true,
+          include: {
+            profile: {
+              select: {
+                name: true,
+              },
+            },
           },
         },
       },

@@ -5,11 +5,23 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star } from "lucide-react"
+import { useAuth } from "@/context/auth-context"
 
-export function AddReview({ profileId }: { profileId: string }) {
+export function AddReview({
+  profileId,
+  ownerUserId,
+}: {
+  profileId: string
+  ownerUserId?: string
+}) {
+  const { user } = useAuth()
   const [text, setText] = useState("")
   const [rating, setRating] = useState(5)
   const [loading, setLoading] = useState(false)
+
+  if (user?.role === "tutor" || (ownerUserId && user?.id === ownerUserId)) {
+    return null
+  }
 
   const submit = async () => {
     const token = localStorage.getItem("token")
@@ -21,30 +33,39 @@ export function AddReview({ profileId }: { profileId: string }) {
 
     setLoading(true)
 
-    await fetch("http://localhost:3001/reviews", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        profileId: Number(profileId),
-        rating,
-        text,
-      }),
-    })
+    try {
+      const res = await fetch("http://localhost:3001/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          profileId: Number(profileId),
+          rating,
+          text,
+        }),
+      })
 
-    setLoading(false)
-    setText("")
-    setRating(5)
+      const data = await res.json()
 
-    location.reload()
+      if (!res.ok) {
+        alert(data.message || "Не удалось отправить отзыв")
+        return
+      }
+
+      setText("")
+      setRating(5)
+      location.reload()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Leave a review</CardTitle>
+        <CardTitle>Оставить отзыв</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -64,14 +85,14 @@ export function AddReview({ profileId }: { profileId: string }) {
 
         {/* Text */}
         <Textarea
-          placeholder="Write your experience..."
+          placeholder="Расскажи, как прошло занятие..."
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
 
         {/* Button */}
         <Button onClick={submit} disabled={loading} className="w-full">
-          {loading ? "Sending..." : "Submit review"}
+          {loading ? "Отправка..." : "Отправить отзыв"}
         </Button>
 
       </CardContent>

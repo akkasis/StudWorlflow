@@ -16,6 +16,7 @@ export interface StudentData {
   reviewCount: number
   description: string
   pricePerHour: number
+  verified?: boolean
 }
 
 interface StudentCardProps {
@@ -31,7 +32,20 @@ export function StudentCard({ student }: StudentCardProps) {
 
   return (
     <Link href={`/profile/${student.id}`} className="group block">
-      <div className="relative h-full rounded-2xl border border-border/50 bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5">
+      <div
+        className={`relative h-full rounded-2xl border bg-card p-5 transition-all duration-300 hover:border-primary/50 hover:bg-card/80 hover:shadow-lg hover:shadow-primary/5 ${
+          student.verified
+            ? "border-primary/35 shadow-md shadow-primary/10 ring-1 ring-primary/15"
+            : "border-border/50"
+        }`}
+      >
+        {student.verified && (
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <Verified className="h-3.5 w-3.5" />
+            Верифицированный тьютор
+          </div>
+        )}
+
         {/* Top Section */}
         <div className="flex items-start gap-4">
           <div className="relative">
@@ -41,9 +55,11 @@ export function StudentCard({ student }: StudentCardProps) {
                 {initials}
               </AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-              <Verified className="h-3 w-3 text-primary-foreground" />
-            </div>
+            {student.verified && (
+              <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                <Verified className="h-3 w-3 text-primary-foreground" />
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate text-lg">
@@ -89,9 +105,9 @@ export function StudentCard({ student }: StudentCardProps) {
           </div>
           <div className="text-right">
             <span className="text-xl font-bold text-foreground">
-              ${student.pricePerHour}
+              {student.pricePerHour} ₽
             </span>
-            <span className="text-sm text-muted-foreground">/hr</span>
+            <span className="text-sm text-muted-foreground">/час</span>
           </div>
         </div>
       </div>

@@ -3,14 +3,16 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Sparkles, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, GraduationCap, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useAuth } from "@/context/auth-context"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { login } = useAuth()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -38,13 +40,15 @@ export default function LoginPage() {
         return
       }
 
-      // 👉 сохраняем токен
-      localStorage.setItem("token", data.access_token)
+      const user = await login(data.access_token)
 
       setIsLoading(false)
 
-      // 👉 редирект после логина
-      router.push("/marketplace")
+      if (user?.role === "admin" || user?.role === "moderator") {
+        router.push("/admin")
+      } else {
+        router.push(user?.role === "tutor" ? "/dashboard" : "/marketplace")
+      }
 
     } catch (err) {
       alert("Ошибка сервера")
@@ -61,16 +65,16 @@ export default function LoginPage() {
 
           <Link href="/" className="flex items-center gap-3 mb-12">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <Sparkles className="h-5 w-5 text-primary-foreground" />
+              <GraduationCap className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-2xl font-bold">
-              Peer<span className="text-gradient">Hub</span>
+              stud<span className="text-gradient">workflow</span>
             </span>
           </Link>
 
-          <h1 className="text-3xl font-bold">Welcome back</h1>
+          <h1 className="text-3xl font-bold">С возвращением</h1>
           <p className="mt-2 text-muted-foreground">
-            Log in to continue your journey
+            Войди, чтобы продолжить работу
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8">
@@ -94,7 +98,7 @@ export default function LoginPage() {
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Введите пароль"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -114,12 +118,12 @@ export default function LoginPage() {
               <div className="flex items-center gap-3">
                 <Checkbox id="remember" />
                 <label htmlFor="remember" className="text-sm">
-                  Remember me
+                  Запомнить меня
                 </label>
               </div>
 
               <Button type="submit" className="w-full h-12" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Log in"}
+                {isLoading ? "Вход..." : "Войти"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
 
@@ -127,9 +131,9 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-8 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            Нет аккаунта?{" "}
             <Link href="/signup" className="text-primary">
-              Sign up
+              Зарегистрироваться
             </Link>
           </p>
 
@@ -139,10 +143,10 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 items-center justify-center bg-card/50">
         <div className="text-center px-12">
           <h2 className="text-4xl font-bold">
-            Connect with the best peer tutors
+            Найди подходящего тьютора
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Join thousands of students helping each other succeed.
+            Общайся, договаривайся о занятиях и двигайся к результату быстрее.
           </p>
         </div>
       </div>

@@ -1,27 +1,22 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import { ProfilesService } from '../profiles/profiles.service';
+import { MessagesController } from './messages.controller';
+import { MessagesService } from './messages.service';
 import { ModerationService } from '../moderation/moderation.service';
 
-describe('AuthService', () => {
-  let service: AuthService;
+describe('MessagesController', () => {
+  let controller: MessagesController;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      controllers: [MessagesController],
       providers: [
-        AuthService,
         {
-          provide: PrismaService,
+          provide: MessagesService,
           useValue: {},
         },
         {
           provide: JwtService,
-          useValue: {},
-        },
-        {
-          provide: ProfilesService,
           useValue: {},
         },
         {
@@ -31,10 +26,10 @@ describe('AuthService', () => {
       ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
+    controller = module.get<MessagesController>(MessagesController);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(controller).toBeDefined();
   });
 });

@@ -1,0 +1,197 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { Send, LifeBuoy } from "lucide-react"
+import { Header } from "@/components/header"
+import { Protected } from "@/components/protected"
+import { useAuth } from "@/context/auth-context"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
+
+interface SupportThreadSummary {
+  userId: string
+  name: string
+  email: string
+  lastMessage: string
+  updatedAt: string
+}
+
+interface SupportMessage {
+  id: string
+  senderUserId: number
+  text: string
+  createdAt: string
+}
+
+export default function SupportPage() {
+  const { user } = useAuth()
+  const [threads, setThreads] = useState<SupportThreadSummary[]>([])
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
+  const [messages, setMessages] = useState<SupportMessage[]>([])
+  const [text, setText] = useState("")
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+  const isModerator = user?.role === "admin" || user?.role === "moderator"
+
+  const markSupportSeen = (items: SupportMessage[]) => {
+    if (!user || isModerator) return
+    const latestMessage = items[items.length - 1]
+    const seenAt = latestMessage?.createdAt || new Date().toISOString()
+    localStorage.setItem(`support-last-seen-${user.id}`, seenAt)
+  }
+
+  const loadThreads = async () => {
+    if (!token) return
+    const res = await fetch("http://localhost:3001/support/threads", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json()
+    setThreads(data)
+    if (!activeThreadId && data[0]) {
+      setActiveThreadId(data[0].userId)
+    }
+  }
+
+  const loadMessages = async (threadId?: string | null) => {
+    if (!token) return
+    const url = isModerator && threadId
+      ? `http://localhost:3001/support/thread/${threadId}`
+      : "http://localhost:3001/support/thread"
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const data = await res.json()
+    setMessages(data.messages || [])
+    if (!isModerator) {
+      markSupportSeen(data.messages || [])
+    }
+  }
+
+  useEffect(() => {
+    void loadThreads()
+  }, [])
+
+  useEffect(() => {
+    if (!activeThreadId && isModerator) return
+    void loadMessages(activeThreadId)
+  }, [activeThreadId, isModerator])
+
+  const sendMessage = async () => {
+    if (!token || !text.trim()) return
+
+    const url = isModerator && activeThreadId
+      ? `http://localhost:3001/support/${activeThreadId}/reply`
+      : "http://localhost:3001/support"
+
+    await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ text }),
+    })
+
+    setText("")
+    await loadThreads()
+    await loadMessages(activeThreadId)
+  }
+
+  return (
+    <Protected>
+      <div className="h-[100dvh] overflow-hidden bg-background">
+        <Header />
+        <div className="mt-16 h-[calc(100dvh-4rem)] flex min-h-0">
+          {isModerator && (
+            <aside className="hidden md:flex md:w-80 border-r border-border bg-card flex-col min-h-0">
+              <div className="p-4 border-b border-border">
+                <h2 className="font-semibold">Поддержка</h2>
+                <p className="text-sm text-muted-foreground">Все обращения пользователей</p>
+              </div>
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="divide-y divide-border">
+                  {threads.map((thread) => (
+                    <button
+                      key={thread.userId}
+                      className={cn(
+                        "w-full text-left p-4 hover:bg-secondary/60",
+                        activeThreadId === thread.userId && "bg-secondary",
+                      )}
+                      onClick={() => setActiveThreadId(thread.userId)}
+                    >
+                      <p className="font-medium">{thread.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{thread.lastMessage || thread.email}</p>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </aside>
+          )}
+
+          <div className="flex-1 flex flex-col min-h-0">
+            <div className="border-b border-border bg-card p-4">
+              <div className="flex items-center gap-3">
+                <LifeBuoy className="h-5 w-5 text-primary" />
+                <div>
+                  <h1 className="font-semibold">
+                    {isModerator ? "Чат поддержки" : "Связь с поддержкой"}
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    {isModerator
+                      ? "Отвечайте на обращения пользователей"
+                      : "Опишите проблему, и модераторы вам ответят"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1 min-h-0 p-4">
+              <div className="max-w-3xl mx-auto space-y-4">
+                {messages.length === 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Пока нет сообщений. Начните диалог с поддержкой.
+                  </div>
+                )}
+                {messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={cn(
+                      "flex",
+                      message.senderUserId === Number(user?.id) ? "justify-end" : "justify-start",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "max-w-[80%] rounded-2xl px-4 py-3",
+                        message.senderUserId === Number(user?.id)
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card border border-border",
+                      )}
+                    >
+                      <p className="text-sm">{message.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <div className="border-t border-border bg-card p-4">
+              <div className="max-w-3xl mx-auto flex gap-3">
+                <Input
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Напишите сообщение поддержке..."
+                />
+                <Button onClick={sendMessage}>
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Protected>
+  )
+}
