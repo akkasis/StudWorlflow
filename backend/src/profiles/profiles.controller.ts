@@ -7,6 +7,7 @@ import {
   Get,
   Patch,
   Query,
+  Param,
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
@@ -27,8 +28,20 @@ export class ProfilesController {
     return this.profilesService.update(req.user.userId, body);
   }
 
+  // 🔥 ВОТ ГЛАВНОЕ ДОБАВЛЕНИЕ
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getMe(@Req() req: any) {
+    return this.profilesService.findByUserId(req.user.userId);
+  }
+
   @Get()
   findAll(@Query() query: any) {
     return this.profilesService.findAll(query);
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.profilesService.findOne(Number(id));
   }
 }

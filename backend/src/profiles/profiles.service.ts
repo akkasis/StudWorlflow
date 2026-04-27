@@ -17,13 +17,16 @@ export class ProfilesService {
     return this.prisma.profile.create({
       data: {
         userId,
+        role: data.role || 'student', // 🔥 КЛЮЧЕВОЙ ФИКС
+
         name: data.name,
-        university: data.university,
-        course: data.course,
-        description: data.description,
-        priceFrom: data.priceFrom,
+        university: data.university || '',
+        course: Number(data.course || 1),
+        description: data.description || '',
+        priceFrom: Number(data.pricePerHour || 0),
+
         profileTags: {
-          create: data.tags?.map((tag: string) => ({
+          create: (data.tags || []).map((tag: string) => ({
             tag: {
               connectOrCreate: {
                 where: { name: tag },
@@ -31,11 +34,6 @@ export class ProfilesService {
               },
             },
           })),
-        },
-      },
-      include: {
-        profileTags: {
-          include: { tag: true },
         },
       },
     });
@@ -47,9 +45,12 @@ export class ProfilesService {
       data: {
         name: data.name,
         university: data.university,
-        course: data.course,
+        course: data.course ? Number(data.course) : undefined,
         description: data.description,
-        priceFrom: data.priceFrom,
+        priceFrom: data.pricePerHour
+          ? Number(data.pricePerHour)
+          : undefined,
+
         profileTags: data.tags
           ? {
               deleteMany: {},
@@ -64,60 +65,113 @@ export class ProfilesService {
             }
           : undefined,
       },
-      include: {
-        profileTags: {
-          include: { tag: true },
-        },
-      },
     });
   }
 
   async findAll(query: any) {
-    const {
-      priceFrom,
-      priceTo,
-      rating,
-      tag,
-      sortBy,
-      order,
-    } = query;
-
-    return this.prisma.profile.findMany({
+    const profiles = await this.prisma.profile.findMany({
       where: {
-        priceFrom: priceFrom
-          ? { gte: Number(priceFrom) }
-          : undefined,
-
-        ...(priceTo && {
-          priceFrom: { lte: Number(priceTo) },
-        }),
-
-        rating: rating
-          ? { gte: Number(rating) }
-          : undefined,
-
-        profileTags: tag
-          ? {
-              some: {
-                tag: {
-                  name: tag,
-                },
-              },
-            }
-          : undefined,
+        role: 'tutor', // 🔥 ТОЛЬКО ТЬЮТОРЫ В МАРКЕТПЛЕЙСЕ
       },
-
-      orderBy: sortBy
-        ? {
-            [sortBy]: order === 'asc' ? 'asc' : 'desc',
-          }
-        : undefined,
-
       include: {
         profileTags: {
-          include: { tag: true },
+          include: {
+            tag: true,
+          },
+        },
+        reviews: true,
+      },
+    });
+
+    return profiles.map((p) => ({
+      id: String(p.id),
+      name: p.name,
+      avatar: p.avatarUrl,
+      university: p.university,
+      course: String(p.course),
+      tags: p.profileTags.map((t) => t.tag.name),
+      rating: p.rating,
+      reviewCount: p.reviews.length,
+      description: p.description,
+      pricePerHour: p.priceFrom,
+    }));
+  }
+
+  async findOne(id: number) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { id },
+      include: {
+        profileTags: {
+          include: {
+            tag: true,
+          },
+        },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                email: true,
+              },
+            },
+          },
         },
       },
     });
+
+    if (!profile) {
+      throw new BadRequestException('Profile not found');
+    }
+
+    return {
+      id: String(profile.id),
+      name: profile.name,
+      avatar: profile.avatarUrl,
+      university: profile.university,
+      course: String(profile.course),
+      tags: profile.profileTags.map((t) => t.tag.name),
+      rating: profile.rating,
+      reviewCount: profile.reviews.length,
+      description: profile.description,
+      pricePerHour: profile.priceFrom,
+      reviews: profile.reviews.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        text: review.text,
+        createdAt: review.createdAt,
+        userEmail: review.user.email,
+      })),
+    };
+  }
+
+  async findByUserId(userId: number) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        profileTags: {
+          include: {
+            tag: true,
+          },
+        },
+        reviews: true,
+      },
+    });
+
+    if (!profile) {
+      throw new BadRequestException('Profile not found');
+    }
+
+    return {
+      id: String(profile.id),
+      name: profile.name,
+      avatar: profile.avatarUrl,
+      university: profile.university,
+      course: String(profile.course),
+      role: profile.role, // ✅ уже ок
+      tags: profile.profileTags.map((t) => t.tag.name),
+      rating: profile.rating,
+      reviewCount: profile.reviews.length,
+      description: profile.description,
+      pricePerHour: profile.priceFrom,
+    };
   }
 }

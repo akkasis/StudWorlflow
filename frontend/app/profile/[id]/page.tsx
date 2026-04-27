@@ -9,23 +9,36 @@ import { Separator } from "@/components/ui/separator"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StarRating } from "@/components/star-rating"
-import { students, reviews } from "@/lib/mock-data"
+import { AddReview } from "@/components/add-review"
+
+export const dynamic = "force-dynamic"
 
 interface ProfilePageProps {
   params: Promise<{ id: string }>
 }
 
+async function getProfile(id: string) {
+  const res = await fetch(`http://localhost:3001/profiles/${id}`, {
+    cache: "no-store",
+  })
+
+  if (!res.ok) return null
+
+  return res.json()
+}
+
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { id } = await params
-  const student = students.find((s) => s.id === id)
 
-  if (!student) {
+  const profile = await getProfile(id)
+
+  if (!profile) {
     notFound()
   }
 
-  const initials = student.name
+  const initials = profile.name
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase()
 
@@ -34,222 +47,155 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
       <Header />
 
       <main className="flex-1">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
-          {/* Profile Header */}
+        <div className="mx-auto max-w-5xl px-4 py-8">
+
+          {/* HEADER */}
           <Card className="overflow-hidden">
             <div className="h-32 bg-gradient-to-r from-primary/20 to-accent/30" />
+
             <CardContent className="relative pt-0 pb-6 px-6">
               <div className="flex flex-col sm:flex-row gap-6 items-start">
-                {/* Avatar */}
-                <Avatar className="h-28 w-28 -mt-14 border-4 border-card shadow-lg">
-                  <AvatarImage src={student.avatar} alt={student.name} />
-                  <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                    {initials}
-                  </AvatarFallback>
+
+                <Avatar className="h-28 w-28 -mt-14 border-4 border-card">
+                  <AvatarImage src={profile.avatar} />
+                  <AvatarFallback>{initials}</AvatarFallback>
                 </Avatar>
 
-                {/* Info */}
                 <div className="flex-1 pt-2">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div>
-                      <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-                        {student.name}
-                      </h1>
-                      <div className="flex items-center gap-2 mt-1 text-muted-foreground">
-                        <MapPin className="h-4 w-4" />
-                        <span>{student.university}</span>
-                        <span>&bull;</span>
-                        <span>{student.course}</span>
-                      </div>
-                      <div className="mt-2">
-                        <StarRating
-                          rating={student.rating}
-                          showValue
-                          reviewCount={student.reviewCount}
-                        />
-                      </div>
-                    </div>
+                  <h1 className="text-3xl font-bold">{profile.name}</h1>
 
-                    <div className="flex flex-col items-start sm:items-end gap-2">
-                      <div className="text-right">
-                        <span className="text-3xl font-bold text-foreground">
-                          ${student.pricePerHour}
-                        </span>
-                        <span className="text-muted-foreground">/hr</span>
-                      </div>
-                      <Link href="/messages">
-                        <Button size="lg">
-                          <MessageSquare className="h-4 w-4 mr-2" />
-                          Contact
-                        </Button>
-                      </Link>
-                    </div>
+                  <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{profile.university}</span>
+                    <span>•</span>
+                    <span>{profile.course}</span>
+                  </div>
+
+                  <div className="mt-2">
+                    <StarRating
+                      rating={profile.rating}
+                      showValue
+                      reviewCount={profile.reviewCount}
+                    />
                   </div>
                 </div>
+
+                <div className="flex flex-col items-start sm:items-end gap-2">
+                  <div className="text-right">
+                    <span className="text-3xl font-bold">
+                      ${profile.pricePerHour}
+                    </span>
+                    <span className="text-muted-foreground">/hr</span>
+                  </div>
+
+                  <Link href="/messages">
+                    <Button size="lg">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Contact
+                    </Button>
+                  </Link>
+                </div>
+
               </div>
             </CardContent>
           </Card>
 
+          {/* CONTENT */}
           <div className="grid lg:grid-cols-3 gap-6 mt-6">
-            {/* Main Content */}
+
+            {/* LEFT */}
             <div className="lg:col-span-2 space-y-6">
-              {/* About */}
+
+              {/* ABOUT */}
               <Card>
                 <CardHeader>
                   <CardTitle>About</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {student.description}
-                  </p>
-                  <p className="text-muted-foreground leading-relaxed mt-4">
-                    I&apos;m passionate about helping fellow students understand complex concepts. 
-                    My teaching style focuses on building intuition and problem-solving skills 
-                    rather than just memorization. I believe that anyone can master challenging 
-                    subjects with the right guidance and approach.
+                  <p className="text-muted-foreground">
+                    {profile.description}
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Skills */}
+              {/* SKILLS */}
               <Card>
                 <CardHeader>
                   <CardTitle>Skills & Expertise</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {student.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="text-sm">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
+                <CardContent className="flex flex-wrap gap-2">
+                  {profile.tags.map((tag: string) => (
+                    <Badge key={tag} variant="secondary">
+                      #{tag}
+                    </Badge>
+                  ))}
                 </CardContent>
               </Card>
 
-              {/* Reviews */}
+              {/* REVIEWS */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Reviews ({student.reviewCount})</CardTitle>
+                  <CardTitle>
+                    Reviews ({profile.reviewCount})
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    {reviews.map((review, index) => (
-                      <div key={review.id}>
-                        <div className="flex items-start gap-4">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={review.avatar} alt={review.studentName} />
-                            <AvatarFallback>{review.studentName[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="font-medium text-foreground">
-                                  {review.studentName}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {review.date}
-                                </p>
-                              </div>
-                              <StarRating rating={review.rating} size="sm" />
-                            </div>
-                            <p className="mt-2 text-muted-foreground leading-relaxed">
-                              {review.text}
-                            </p>
-                          </div>
-                        </div>
-                        {index < reviews.length - 1 && (
-                          <Separator className="mt-6" />
-                        )}
+
+                <CardContent className="space-y-4">
+
+                  {profile.reviews.map((r: any, index: number) => (
+                    <div key={r.id}>
+                      <div className="border p-3 rounded-lg">
+                        <p className="font-medium">{r.userEmail}</p>
+                        <p className="text-sm text-muted-foreground">
+                          ⭐ {r.rating}
+                        </p>
+                        <p className="mt-1">{r.text}</p>
                       </div>
-                    ))}
-                  </div>
+
+                      {index < profile.reviews.length - 1 && (
+                        <Separator className="mt-4" />
+                      )}
+                    </div>
+                  ))}
+
                 </CardContent>
               </Card>
+
+              {/* 👇 ВОТ СЮДА ДОБАВЛЕНА ФОРМА */}
+              <AddReview profileId={id} />
+
             </div>
 
-            {/* Sidebar */}
+            {/* RIGHT */}
             <div className="space-y-6">
-              {/* Pricing Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pricing</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
-                    <div>
-                      <p className="font-medium text-foreground">Hourly Rate</p>
-                      <p className="text-sm text-muted-foreground">Standard session</p>
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">
-                      ${student.pricePerHour}
-                    </p>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
-                    <div>
-                      <p className="font-medium text-foreground">Package (5 hrs)</p>
-                      <p className="text-sm text-muted-foreground">10% discount</p>
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">
-                      ${Math.round(student.pricePerHour * 5 * 0.9)}
-                    </p>
-                  </div>
-                  <Link href="/messages" className="block">
-                    <Button className="w-full" size="lg">
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Contact for booking
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
 
-              {/* Availability Card */}
+              {/* AVAILABILITY */}
               <Card>
                 <CardHeader>
                   <CardTitle>Availability</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      <span>Usually responds within 2 hours</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Available for online sessions</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Flexible scheduling</span>
-                    </div>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <Clock className="h-4 w-4" />
+                    <span>Fast response</span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <span>Online sessions</span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    <span>Flexible scheduling</span>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Trust & Safety */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Trust & Safety</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Identity verified</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>University email confirmed</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary" />
-                      <span>Member since 2024</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
+
           </div>
+
         </div>
       </main>
 

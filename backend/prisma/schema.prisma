@@ -25,6 +25,7 @@ model Profile {
   university  String
   course      Int
   description String
+  role        String   @default("student")
   priceFrom   Int
   rating      Float    @default(0)
   avatarUrl   String?

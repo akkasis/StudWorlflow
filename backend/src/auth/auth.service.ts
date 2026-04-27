@@ -2,15 +2,19 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { ProfilesService } from '../profiles/profiles.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private profilesService: ProfilesService, // 🔥 добавили
   ) {}
 
-  async register(email: string, password: string) {
+  async register(data: any) {
+    const { email, password, role, profile } = data;
+
     const userExists = await this.prisma.user.findUnique({
       where: { email },
     });
@@ -28,7 +32,20 @@ export class AuthService {
       },
     });
 
-    return user;
+    // 🔥 СОЗДАЕМ ПРОФИЛЬ С РОЛЬЮ
+    await this.profilesService.create(user.id, {
+      ...profile,
+      role, // 💣 ВОТ ЭТО ТЫ РАНЬШЕ НЕ ДЕЛАЛ
+    });
+
+    const token = this.jwtService.sign({
+      userId: user.id,
+      email: user.email,
+    });
+
+    return {
+      access_token: token,
+    };
   }
 
   async login(email: string, password: string) {
