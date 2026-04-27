@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Send, ArrowLeft, MoreVertical, MessageSquare } from "lucide-react"
@@ -46,7 +46,7 @@ interface ConversationResponse {
   messages: ChatMessage[]
 }
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const { user } = useAuth()
   const { showAlert } = useAppAlert()
   const searchParams = useSearchParams()
@@ -428,5 +428,24 @@ export default function MessagesPage() {
         </div>
       </div>
     </Protected>
+  )
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense
+      fallback={
+        <Protected>
+          <div className="h-[100dvh] overflow-hidden bg-background">
+            <Header />
+            <div className="mt-16 flex h-[calc(100dvh-4rem)] items-center justify-center text-muted-foreground">
+              Загрузка сообщений...
+            </div>
+          </div>
+        </Protected>
+      }
+    >
+      <MessagesPageContent />
+    </Suspense>
   )
 }
