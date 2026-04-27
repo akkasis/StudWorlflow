@@ -11,7 +11,6 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { useAuth } from "@/context/auth-context"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
@@ -19,7 +18,6 @@ const UNIVERSITY_NAME = "РАНХиГС"
 
 export default function SignupPage() {
   const router = useRouter()
-  const { login } = useAuth()
   const { showAlert } = useAppAlert()
 
   const [showPassword, setShowPassword] = useState(false)
@@ -61,8 +59,8 @@ export default function SignupPage() {
         return
       }
 
-      await login(data.access_token)
-      router.push(userType === "tutor" ? "/dashboard" : "/marketplace")
+      showAlert("Почта почти готова", data.message || "Мы отправили письмо для подтверждения почты.")
+      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
     } catch (error) {
       console.error(error)
       showAlert("Ошибка сервера", "Сейчас не удалось завершить регистрацию. Попробуй еще раз чуть позже.")

@@ -89,7 +89,7 @@ interface UserContext {
 
 export default function AdminPage() {
   const { user } = useAuth()
-  const { showAlert } = useAppAlert()
+  const { showAlert, showConfirm } = useAppAlert()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [reviews, setReviews] = useState<AdminReview[]>([])
   const [overview, setOverview] = useState<{ users: number; profiles: number; reviews: number } | null>(null)
@@ -247,6 +247,43 @@ export default function AdminPage() {
       headers: { Authorization: `Bearer ${token}` },
     })
     await loadData()
+  }
+
+  const deleteUser = async (userId: string) => {
+    if (!token) return
+
+    const confirmed = await showConfirm(
+      "Удалить аккаунт?",
+      "Точно удалить этот аккаунт? Это действие необратимо: исчезнут профиль, отзывы и связанные данные пользователя.",
+      {
+        confirmLabel: "Удалить",
+        cancelLabel: "Отмена",
+        destructive: true,
+      },
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    const res = await fetch(apiUrl(`/admin/users/${userId}`), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => null)
+      showAlert("Не удалось удалить аккаунт", data?.message || "Попробуй еще раз.")
+      return
+    }
+
+    if (selectedUserId === userId) {
+      setSelectedUserId(null)
+      setUserContext(null)
+    }
+
+    await loadData()
+    showAlert("Аккаунт удален", "Пользователь и его связанные данные были удалены.")
   }
 
   return (
@@ -498,6 +535,11 @@ export default function AdminPage() {
                             <Button variant="outline" onClick={() => updateUser(selectedUser.id, { banType: "clear" })}>
                               Снять ограничения
                             </Button>
+                            {user.role === "admin" ? (
+                              <Button variant="destructive" onClick={() => deleteUser(selectedUser.id)}>
+                                Удалить аккаунт
+                              </Button>
+                            ) : null}
                           </div>
                         </div>
 

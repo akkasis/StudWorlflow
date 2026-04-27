@@ -8,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  role      String   @default("user")
-  createdAt DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password      String
+  role          String   @default("user")
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
 
   profile         Profile?
   reviews         Review[]
@@ -20,6 +21,8 @@ model User {
   supportThread   SupportThread?
   supportMessages SupportMessage[]     @relation("SupportMessageSender")
   moderation      UserModerationState?
+  verificationTokens EmailVerificationToken[]
+  passwordResetTokens PasswordResetToken[]
 }
 
 model Profile {
@@ -144,4 +147,28 @@ model ReviewModerationState {
   verified    Boolean @default(false)
 
   review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+model EmailVerificationToken {
+  id        String   @id
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

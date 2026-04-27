@@ -373,4 +373,79 @@ export class AdminService {
 
     return { success: true };
   }
+
+  async deleteUser(actingUserId: number, actingRole: string, userId: number) {
+    if (actingRole !== 'admin') {
+      throw new ForbiddenException('Удалять аккаунты может только администратор');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+      },
+    });
+
+    if (!user) {
+      throw new BadRequestException('Пользователь не найден');
+    }
+
+    if (user.email === ROOT_ADMIN_EMAIL) {
+      throw new ForbiddenException('Нельзя удалить главного администратора');
+    }
+
+    if (actingUserId === userId) {
+      throw new ForbiddenException('Нельзя удалить собственный аккаунт из админки');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const authoredReviews = await tx.review.findMany({
+        where: { userId },
+        select: { id: true },
+      });
+
+      const profileReviews = user.profile
+        ? await tx.review.findMany({
+            where: { profileId: user.profile.id },
+            select: { id: true },
+          })
+        : [];
+
+      const reviewIds = Array.from(
+        new Set([...authoredReviews, ...profileReviews].map((review) => review.id)),
+      );
+
+      if (reviewIds.length > 0) {
+        await tx.$executeRaw`
+          DELETE FROM "ReviewModerationState"
+          WHERE "reviewId" = ANY(${reviewIds}::int[])
+        `;
+      }
+
+      await tx.review.deleteMany({
+        where: {
+          OR: [
+            { userId },
+            ...(user.profile ? [{ profileId: user.profile.id }] : []),
+          ],
+        },
+      });
+
+      if (user.profile) {
+        await tx.profileTag.deleteMany({
+          where: { profileId: user.profile.id },
+        });
+
+        await tx.profile.delete({
+          where: { id: user.profile.id },
+        });
+      }
+
+      await tx.user.delete({
+        where: { id: userId },
+      });
+    });
+
+    return { success: true };
+  }
 }

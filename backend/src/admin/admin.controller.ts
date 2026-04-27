@@ -23,6 +23,12 @@ export class AdminController {
     }
   }
 
+  private ensureAdmin(req: any) {
+    if (req.user.role !== 'admin') {
+      throw new ForbiddenException('Недостаточно прав');
+    }
+  }
+
   @Get('overview')
   getOverview(@Req() req: any) {
     this.ensureModerator(req);
@@ -45,6 +51,16 @@ export class AdminController {
   updateUser(@Req() req: any, @Param('userId') userId: string, @Body() body: any) {
     this.ensureModerator(req);
     return this.adminService.updateUser(req.user.email, Number(userId), body);
+  }
+
+  @Delete('users/:userId')
+  deleteUser(@Req() req: any, @Param('userId') userId: string) {
+    this.ensureAdmin(req);
+    return this.adminService.deleteUser(
+      Number(req.user.userId),
+      req.user.role,
+      Number(userId),
+    );
   }
 
   @Get('reviews')

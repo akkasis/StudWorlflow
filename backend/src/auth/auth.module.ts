@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './jwt.guard';
 import { ProfilesModule } from '../profiles/profiles.module';
 import { getJwtModuleOptions } from '../config/app.config';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { getJwtModuleOptions } from '../config/app.config';
     JwtModule.register(getJwtModuleOptions()),
 
     ProfilesModule,
+    MailModule,
   ],
   providers: [AuthService, JwtAuthGuard],
   controllers: [AuthController],

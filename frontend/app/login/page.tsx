@@ -38,7 +38,7 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
-        showAlert("Не удалось войти", "Проверь email и пароль, а затем попробуй снова.")
+        showAlert("Не удалось войти", data?.message || "Проверь email и пароль, а затем попробуй снова.")
         setIsLoading(false)
         return
       }
@@ -123,6 +123,12 @@ export default function LoginPage() {
                 <label htmlFor="remember" className="text-sm">
                   Запомнить меня
                 </label>
+              </div>
+
+              <div className="flex justify-end">
+                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                  Забыли пароль?
+                </Link>
               </div>
 
               <Button type="submit" className="w-full h-12" disabled={isLoading}>
