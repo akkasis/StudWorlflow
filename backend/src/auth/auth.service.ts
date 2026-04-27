@@ -61,23 +61,47 @@ export class AuthService implements OnModuleInit {
 
     const normalizedRole = role === 'tutor' ? 'tutor' : 'student';
 
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        role: normalizedRole,
-      },
-    });
+    const user = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: normalizedRole,
+        },
+      });
 
-    await this.profilesService.create(user.id, {
-      ...(profile || {}),
-      role: normalizedRole,
-      name: profile?.name || name,
-      university: profile?.university || university,
-      course: profile?.course || course,
-      description: profile?.description || description,
-      tags: profile?.tags || tags,
-      pricePerHour: profile?.pricePerHour || pricePerHour,
+      await tx.profile.create({
+        data: {
+          userId: createdUser.id,
+          role: normalizedRole,
+          name: profile?.name || name || '',
+          university: 'РАНХиГС',
+          course: Number(profile?.course || course || 1),
+          description:
+            normalizedRole === 'tutor'
+              ? profile?.description || description || ''
+              : '',
+          priceFrom:
+            normalizedRole === 'tutor'
+              ? Number(profile?.pricePerHour || pricePerHour || 0)
+              : 0,
+          profileTags:
+            normalizedRole === 'tutor'
+              ? {
+                  create: (profile?.tags || tags || []).map((tag: string) => ({
+                    tag: {
+                      connectOrCreate: {
+                        where: { name: tag },
+                        create: { name: tag },
+                      },
+                    },
+                  })),
+                }
+              : undefined,
+        },
+      });
+
+      return createdUser;
     });
 
     const token = this.jwtService.sign({

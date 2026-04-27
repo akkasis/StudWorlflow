@@ -53,17 +53,26 @@ export class ProfilesService {
   async update(userId: number, data: any) {
     const profile = await this.prisma.profile.findUnique({
       where: { userId },
+      include: {
+        user: {
+          select: {
+            role: true,
+          },
+        },
+      },
     });
 
     if (!profile) {
       throw new BadRequestException('Profile not found');
     }
 
-    const isTutor = profile.role === 'tutor';
+    const normalizedRole = profile.user.role === 'tutor' ? 'tutor' : 'student';
+    const isTutor = normalizedRole === 'tutor';
 
     await this.prisma.profile.update({
       where: { userId },
       data: {
+        role: normalizedRole,
         name: data.name,
         university: DEFAULT_UNIVERSITY,
         course: data.course ? Number(data.course) : undefined,
@@ -111,10 +120,24 @@ export class ProfilesService {
 
     const profiles = await this.prisma.profile.findMany({
       where: {
-        role: 'tutor', // 🔥 ТОЛЬКО ТЬЮТОРЫ В МАРКЕТПЛЕЙСЕ
+        OR: [
+          {
+            role: 'tutor',
+          },
+          {
+            user: {
+              role: 'tutor',
+            },
+          },
+        ],
       },
       orderBy,
       include: {
+        user: {
+          select: {
+            role: true,
+          },
+        },
         profileTags: {
           include: {
             tag: true,
@@ -127,6 +150,7 @@ export class ProfilesService {
     const normalizedProfiles = await Promise.all(
       profiles.map(async (p) => {
         const moderation = await this.moderationService.getUserState(p.userId);
+        const normalizedRole = p.user.role === 'tutor' ? 'tutor' : p.role;
         return {
           id: String(p.id),
           name: p.name,
@@ -138,6 +162,7 @@ export class ProfilesService {
           reviewCount: p.reviews.length,
           description: p.description,
           pricePerHour: p.priceFrom,
+          role: normalizedRole,
           verified: moderation.tutorVerified || false,
         };
       }),
@@ -164,6 +189,11 @@ export class ProfilesService {
     const profile = await this.prisma.profile.findUnique({
       where: { id },
       include: {
+        user: {
+          select: {
+            role: true,
+          },
+        },
         profileTags: {
           include: {
             tag: true,
@@ -224,7 +254,7 @@ export class ProfilesService {
       avatar: profile.avatarUrl,
       university: profile.university,
       course: String(profile.course),
-      role: profile.role,
+      role: profile.user.role === 'tutor' ? 'tutor' : profile.role,
       tags: profile.profileTags.map((t) => t.tag.name),
       rating: profile.rating,
       reviewCount: profile.reviews.length,
@@ -242,6 +272,11 @@ export class ProfilesService {
       this.prisma.profile.findUnique({
         where: { userId },
         include: {
+          user: {
+            select: {
+              role: true,
+            },
+          },
           profileTags: {
             include: {
               tag: true,
@@ -312,7 +347,7 @@ export class ProfilesService {
       avatar: profile.avatarUrl,
       university: profile.university,
       course: String(profile.course),
-      role: profile.role,
+      role: profile.user.role === 'tutor' ? 'tutor' : profile.role,
       tags: profile.profileTags.map((t) => t.tag.name),
       rating: profile.rating,
       reviewCount: profile.reviews.length,
