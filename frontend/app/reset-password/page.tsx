@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowRight, Eye, EyeOff, GraduationCap } from "lucide-react"
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { showAlert } = useAppAlert()
@@ -131,5 +131,34 @@ export default function ResetPasswordPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background px-4 py-12">
+          <div className="mx-auto flex max-w-lg justify-center">
+            <Card className="w-full border-border/70 bg-card/95 shadow-xl">
+              <CardHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary">
+                    <GraduationCap className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <span className="text-2xl font-bold">Skillent</span>
+                </div>
+                <div>
+                  <CardTitle className="text-3xl">Новый пароль</CardTitle>
+                  <p className="mt-2 text-muted-foreground">Подготавливаем форму сброса пароля...</p>
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

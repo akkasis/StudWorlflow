@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { ArrowRight, GraduationCap, MailCheck } from "lucide-react"
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const { showAlert } = useAppAlert()
   const [email, setEmail] = useState(searchParams.get("email") || "")
@@ -146,5 +146,34 @@ export default function VerifyEmailPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background px-4 py-12">
+          <div className="mx-auto flex max-w-lg justify-center">
+            <Card className="w-full border-border/70 bg-card/95 shadow-xl">
+              <CardHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary">
+                    <GraduationCap className="h-5 w-5 text-primary-foreground" />
+                  </div>
+                  <span className="text-2xl font-bold">Skillent</span>
+                </div>
+                <div>
+                  <CardTitle className="text-3xl">Подтверждение почты</CardTitle>
+                  <p className="mt-2 text-muted-foreground">Проверяем ссылку подтверждения...</p>
+                </div>
+              </CardHeader>
+            </Card>
+          </div>
+        </div>
+      }
+    >
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
