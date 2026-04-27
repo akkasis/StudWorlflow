@@ -18,6 +18,7 @@ interface StoredMessage {
 interface StoredConversation {
   id: string;
   participantUserIds: [number, number];
+  participantProfileIds?: [number, number];
   messages: StoredMessage[];
   createdAt: string;
   updatedAt: string;
@@ -42,24 +43,24 @@ export class MessagesService {
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
       );
 
-    const partnerUserIds = myConversations.map((conversation) =>
-      this.getPartnerUserId(conversation, userId),
+    const partnerProfileIds = myConversations.map((conversation) =>
+      this.getPartnerProfileId(conversation, userId),
     );
 
     const profiles = await this.prisma.profile.findMany({
       where: {
-        userId: {
-          in: partnerUserIds,
+        id: {
+          in: partnerProfileIds,
         },
       },
     });
 
-    const profilesByUserId = new Map(profiles.map((profile) => [profile.userId, profile]));
+    const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
 
     return myConversations
       .map((conversation) => {
-        const partnerUserId = this.getPartnerUserId(conversation, userId);
-        const partnerProfile = profilesByUserId.get(partnerUserId);
+        const partnerProfileId = this.getPartnerProfileId(conversation, userId);
+        const partnerProfile = profilesById.get(partnerProfileId);
 
         if (!partnerProfile) {
           return null;
@@ -114,7 +115,9 @@ export class MessagesService {
     const conversation = this.findConversation(
       store.conversations,
       userId,
+      myProfile.id,
       targetProfile.userId,
+      targetProfile.id,
     );
 
     if (conversation) {
@@ -188,8 +191,20 @@ export class MessagesService {
 
     const store = await this.readStore();
     const conversation =
-      this.findConversation(store.conversations, userId, targetProfile.userId) ||
-      this.createConversation(store.conversations, userId, targetProfile.userId);
+      this.findConversation(
+        store.conversations,
+        userId,
+        myProfile.id,
+        targetProfile.userId,
+        targetProfile.id,
+      ) ||
+      this.createConversation(
+        store.conversations,
+        userId,
+        myProfile.id,
+        targetProfile.userId,
+        targetProfile.id,
+      );
 
     const message: StoredMessage = {
       id: String(Date.now()),
@@ -216,16 +231,31 @@ export class MessagesService {
     return conversation.participantUserIds.find((id) => id !== userId) as number;
   }
 
+  private getPartnerProfileId(conversation: StoredConversation, userId: number) {
+    const userIndex = conversation.participantUserIds.findIndex((id) => id === userId);
+    const partnerIndex = userIndex === 0 ? 1 : 0;
+    return conversation.participantProfileIds?.[partnerIndex] as number;
+  }
+
   private findConversation(
     conversations: StoredConversation[],
     firstUserId: number,
+    firstProfileId: number,
     secondUserId: number,
+    secondProfileId: number,
   ) {
     return conversations.find((conversation) => {
       const [a, b] = conversation.participantUserIds;
+      const [profileA, profileB] = conversation.participantProfileIds || [];
       return (
-        (a === firstUserId && b === secondUserId) ||
-        (a === secondUserId && b === firstUserId)
+        (a === firstUserId &&
+          b === secondUserId &&
+          profileA === firstProfileId &&
+          profileB === secondProfileId) ||
+        (a === secondUserId &&
+          b === firstUserId &&
+          profileA === secondProfileId &&
+          profileB === firstProfileId)
       );
     });
   }
@@ -233,12 +263,15 @@ export class MessagesService {
   private createConversation(
     conversations: StoredConversation[],
     firstUserId: number,
+    firstProfileId: number,
     secondUserId: number,
+    secondProfileId: number,
   ) {
     const now = new Date().toISOString();
     const conversation: StoredConversation = {
       id: `conversation_${Date.now()}`,
       participantUserIds: [firstUserId, secondUserId],
+      participantProfileIds: [firstProfileId, secondProfileId],
       messages: [],
       createdAt: now,
       updatedAt: now,
@@ -253,7 +286,14 @@ export class MessagesService {
 
     try {
       const raw = await fs.readFile(this.storePath, 'utf8');
-      return JSON.parse(raw) as MessagesStore;
+      const parsed = JSON.parse(raw) as Partial<MessagesStore>;
+      const normalized = this.normalizeStore(parsed);
+
+      if (JSON.stringify(parsed) !== JSON.stringify(normalized)) {
+        await this.writeStore(normalized);
+      }
+
+      return normalized;
     } catch (error: unknown) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         const emptyStore = { conversations: [] };
@@ -267,5 +307,101 @@ export class MessagesService {
 
   private async writeStore(store: MessagesStore) {
     await fs.writeFile(this.storePath, JSON.stringify(store, null, 2), 'utf8');
+  }
+
+  private normalizeStore(store: Partial<MessagesStore>): MessagesStore {
+    return {
+      conversations: (store.conversations || [])
+        .map((conversation) => this.normalizeConversation(conversation))
+        .filter((conversation): conversation is StoredConversation => Boolean(conversation)),
+    };
+  }
+
+  private normalizeConversation(
+    conversation: Partial<StoredConversation> | undefined,
+  ): StoredConversation | null {
+    if (!conversation) {
+      return null;
+    }
+
+    const participantUserIds = this.normalizeIdPair(conversation.participantUserIds);
+    const participantProfileIds = this.normalizeIdPair(conversation.participantProfileIds);
+
+    // We intentionally discard legacy conversations without profile ids:
+    // otherwise recreated users can inherit old threads after id reuse.
+    if (!participantUserIds || !participantProfileIds) {
+      return null;
+    }
+
+    const messages = (conversation.messages || [])
+      .map((message) => this.normalizeMessage(message, participantUserIds))
+      .filter((message): message is StoredMessage => Boolean(message));
+
+    return {
+      id: conversation.id || `conversation_${Date.now()}`,
+      participantUserIds,
+      participantProfileIds,
+      messages,
+      createdAt: conversation.createdAt || new Date().toISOString(),
+      updatedAt:
+        messages[messages.length - 1]?.createdAt ||
+        conversation.updatedAt ||
+        conversation.createdAt ||
+        new Date().toISOString(),
+    };
+  }
+
+  private normalizeIdPair(value: unknown): [number, number] | null {
+    if (!Array.isArray(value) || value.length !== 2) {
+      return null;
+    }
+
+    const first = Number(value[0]);
+    const second = Number(value[1]);
+
+    if (!Number.isInteger(first) || !Number.isInteger(second)) {
+      return null;
+    }
+
+    return [first, second];
+  }
+
+  private normalizeMessage(
+    message: Partial<StoredMessage> | undefined,
+    participantUserIds: [number, number],
+  ): StoredMessage | null {
+    if (!message) {
+      return null;
+    }
+
+    const senderUserId = Number(message.senderUserId);
+    const text = message.text?.trim();
+
+    if (!participantUserIds.includes(senderUserId) || !text) {
+      return null;
+    }
+
+    const readByUserIds = Array.isArray(message.readByUserIds)
+      ? message.readByUserIds
+          .map((id) => Number(id))
+          .filter(
+            (id, index, list) =>
+              Number.isInteger(id) &&
+              participantUserIds.includes(id) &&
+              list.indexOf(id) === index,
+          )
+      : [senderUserId];
+
+    if (!readByUserIds.includes(senderUserId)) {
+      readByUserIds.push(senderUserId);
+    }
+
+    return {
+      id: message.id || String(Date.now()),
+      senderUserId,
+      text,
+      createdAt: message.createdAt || new Date().toISOString(),
+      readByUserIds,
+    };
   }
 }
