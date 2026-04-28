@@ -146,9 +146,6 @@ export function Header() {
                 <span className="text-xl font-bold tracking-tight">
                   Skill<span className="text-gradient">ent</span>
                 </span>
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  РАНХиГС
-                </p>
               </div>
             </Link>
             <ThemeToggle />

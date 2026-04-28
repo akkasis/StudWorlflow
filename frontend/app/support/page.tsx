@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Send, LifeBuoy } from "lucide-react"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
@@ -29,6 +30,8 @@ interface SupportMessage {
 
 export default function SupportPage() {
   const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const requestedThreadId = searchParams.get("threadId")
   const [threads, setThreads] = useState<SupportThreadSummary[]>([])
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
   const [messages, setMessages] = useState<SupportMessage[]>([])
@@ -58,8 +61,14 @@ export default function SupportPage() {
     })
     const data = await res.json()
     setThreads(data)
-    setActiveThreadId((current) => current || data[0]?.userId || null)
-  }, [token])
+    setActiveThreadId((current) => {
+      if (requestedThreadId && data.some((thread: SupportThreadSummary) => thread.userId === requestedThreadId)) {
+        return requestedThreadId
+      }
+
+      return current || data[0]?.userId || null
+    })
+  }, [requestedThreadId, token])
 
   const loadMessages = useCallback(async (threadId?: string | null) => {
     if (!token) return

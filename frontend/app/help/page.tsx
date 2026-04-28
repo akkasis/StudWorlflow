@@ -18,7 +18,7 @@ export default function HelpPage() {
             </div>
             <h1 className="mt-4 text-4xl font-bold">Помощь по Skillent</h1>
             <p className="mt-3 text-muted-foreground">
-              Коротко и понятно: как найти тьютора, как создать анкету и как пользоваться сервисом внутри РАНХиГС.
+              Коротко и понятно: как найти тьютора, как создать анкету и как пользоваться сервисом.
             </p>
           </div>
 

@@ -1,10 +1,12 @@
 "use client"
 
 import { useEffect, useMemo, useRef } from "react"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { LifeBuoy, MessageSquareMore } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
 import { apiUrl } from "@/lib/api"
 import { toast } from "@/hooks/use-toast"
+import { ToastAction } from "@/components/ui/toast"
 
 interface ConversationSummary {
   profileId: string
@@ -78,6 +80,7 @@ function useSoftNotificationSound() {
 export function SiteNotifications() {
   const { user } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
   const playSound = useSoftNotificationSound()
   const initializedRef = useRef(false)
   const conversationsRef = useRef<Record<string, string>>({})
@@ -94,10 +97,43 @@ export function SiteNotifications() {
     const token = localStorage.getItem("token")
     if (!token) return
 
-    const notify = (title: string, description: string) => {
+    const notify = ({
+      title,
+      description,
+      href,
+      actionLabel,
+      icon,
+    }: {
+      title: string
+      description: string
+      href: string
+      actionLabel: string
+      icon: "message" | "support"
+    }) => {
       toast({
         title,
         description,
+        onClick: () => {
+          router.push(href)
+        },
+        className: "cursor-pointer",
+        action: (
+          <ToastAction
+            altText={actionLabel}
+            onClick={(event) => {
+              event.stopPropagation()
+              router.push(href)
+            }}
+            className="rounded-xl border-border/70 bg-primary/10 px-3 text-primary hover:bg-primary hover:text-primary-foreground"
+          >
+            {icon === "message" ? (
+              <MessageSquareMore className="mr-2 h-4 w-4" />
+            ) : (
+              <LifeBuoy className="mr-2 h-4 w-4" />
+            )}
+            {actionLabel}
+          </ToastAction>
+        ),
       })
       playSound()
     }
@@ -130,10 +166,14 @@ export function SiteNotifications() {
               conversation.unreadCount > 0
 
             if (isNewIncoming) {
-              notify(
-                `Новое сообщение от ${conversation.name}`,
-                conversation.lastMessage || "Открой чат, чтобы посмотреть сообщение.",
-              )
+              notify({
+                title: `Новое сообщение от ${conversation.name}`,
+                description:
+                  conversation.lastMessage || "Открой чат, чтобы посмотреть сообщение.",
+                href: `/messages?profileId=${conversation.profileId}`,
+                actionLabel: "Открыть чат",
+                icon: "message",
+              })
             }
           })
 
@@ -160,10 +200,14 @@ export function SiteNotifications() {
                 newestThread.lastSenderUserId !== Number(user.id) &&
                 pathname !== "/support"
               ) {
-                notify(
-                  `Новое обращение: ${newestThread.name}`,
-                  newestThread.lastMessage || "Пользователь написал в поддержку.",
-                )
+                notify({
+                  title: `Новое обращение: ${newestThread.name}`,
+                  description:
+                    newestThread.lastMessage || "Пользователь написал в поддержку.",
+                  href: `/support?threadId=${newestThread.userId}`,
+                  actionLabel: "Открыть тред",
+                  icon: "support",
+                })
               }
 
               supportRef.current = newestThread.updatedAt
@@ -189,10 +233,13 @@ export function SiteNotifications() {
                 lastMessage.senderUserId !== Number(user.id) &&
                 pathname !== "/support"
               ) {
-                notify(
-                  "Новое сообщение от поддержки",
-                  lastMessage.text || "Поддержка ответила в чате.",
-                )
+                notify({
+                  title: "Новое сообщение от поддержки",
+                  description: lastMessage.text || "Поддержка ответила в чате.",
+                  href: "/support",
+                  actionLabel: "Открыть чат",
+                  icon: "support",
+                })
               }
 
               supportRef.current = lastMessage.createdAt

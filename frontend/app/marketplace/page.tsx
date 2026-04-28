@@ -109,7 +109,7 @@ export default function MarketplacePage() {
             <div>
               <h1 className="text-3xl font-bold mb-2">Каталог тьюторов</h1>
               <p className="text-muted-foreground">
-                Выбирай тьюторов РАНХиГС по рейтингу, цене и своим сохранениям.
+                Выбирай тьюторов по рейтингу, цене и своим сохранениям.
               </p>
             </div>
 

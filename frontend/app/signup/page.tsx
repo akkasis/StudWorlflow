@@ -91,14 +91,14 @@ export default function SignupPage() {
         <div className="hidden lg:block lg:w-1/2">
           <Badge className="mb-6 bg-card/80 text-muted-foreground border-border/60">
             <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />
-            Только для студентов РАНХиГС
+            Сообщество студентов и тьюторов
           </Badge>
           <h1 className="max-w-xl text-5xl font-bold leading-tight">
             Учись и зарабатывай внутри{" "}
             <span className="text-gradient">Skillent</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Найди тьютора по своему предмету или создай анкету и помогай другим студентам РАНХиГС.
+            Найди тьютора по своему предмету или создай анкету и помогай другим студентам.
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -137,7 +137,7 @@ export default function SignupPage() {
               <div>
                 <CardTitle className="text-3xl">Создать аккаунт</CardTitle>
                 <p className="mt-2 text-muted-foreground">
-                  Быстрый старт для студентов и тьюторов РАНХиГС.
+                  Быстрый старт для студентов и тьюторов.
                 </p>
               </div>
             </CardHeader>
