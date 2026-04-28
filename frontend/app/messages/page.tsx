@@ -318,7 +318,7 @@ function MessagesPageContent() {
             </div>
 
             <ScrollArea className="flex-1 min-h-0">
-              <div className="space-y-3 p-3">
+              <div className="space-y-2.5 p-3">
                 {!loading && conversations.length === 0 && (
                   <div className="rounded-[2rem] border border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
                     Пока нет диалогов. Открой профиль тьютора и начни переписку.
@@ -329,7 +329,7 @@ function MessagesPageContent() {
                   <button
                     key={conversation.profileId}
                     className={cn(
-                      "w-full rounded-[2rem] border border-border/70 bg-card/85 px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-secondary/45",
+                      "w-full rounded-[1.75rem] border border-border/70 bg-card/85 px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-secondary/45",
                       selectedConversation?.profileId === conversation.profileId &&
                         "border-primary/35 bg-secondary shadow-md shadow-primary/5",
                     )}
@@ -346,53 +346,37 @@ function MessagesPageContent() {
                       }
                     }}
                   >
-                    <div className="relative">
+                    <div className="relative shrink-0">
                       <UserAvatar
                         src={conversation.avatar}
                         name={conversation.name}
                         isOnline={conversation.isOnline}
-                        className="h-12 w-12"
+                        className="h-14 w-14"
+                        indicatorClassName="h-4 w-4 border-[3px] border-card"
                       />
-                      {conversation.unreadCount > 0 && (
-                        <div className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 bg-primary rounded-full border-2 border-card text-[10px] text-primary-foreground flex items-center justify-center">
-                          {conversation.unreadCount}
-                        </div>
-                      )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-start justify-between gap-3">
                         <p className="font-medium text-foreground truncate">
                           {conversation.name}
                         </p>
-                        {!conversation.isOnline ? (
-                          <span className="text-xs text-muted-foreground shrink-0">
-                            {formatConversationTime(conversation.timestamp)}
+                        {conversation.unreadCount > 0 ? (
+                          <span className="min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                            {conversation.unreadCount}
                           </span>
                         ) : null}
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                      <p className="mt-0.5 text-sm text-muted-foreground truncate">
                         {conversation.role === "tutor" ? "Тьютор" : "Студент"} • {conversation.university}
                       </p>
                       {conversation.isOnline ? (
-                        <p className="mt-1 text-[11px] font-medium text-emerald-500">Сейчас в сети</p>
+                        <p className="mt-1 text-sm font-medium text-emerald-500">В сети</p>
                       ) : null}
-                      <p className="text-sm truncate mt-1 text-muted-foreground">
-                        {conversation.lastMessage || "Начни разговор первым"}
-                      </p>
-                      <div className="mt-2 flex items-center justify-between gap-2">
-                        {!conversation.isOnline ? (
-                          <p className="text-[11px] text-muted-foreground">
-                            Последняя активность: {formatConversationTime(conversation.timestamp)}
-                          </p>
-                        ) : (
-                          <span />
-                        )}
-                        {conversation.unreadCount > 0 ? (
-                          <span className="text-[11px] font-medium text-primary">
-                            {conversation.unreadCount} непрочит.
-                          </span>
-                        ) : null}
-                      </div>
+                      {!conversation.isOnline ? (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Был(а) в сети: {formatConversationTime(conversation.timestamp)}
+                        </p>
+                      ) : null}
                     </div>
                   </button>
                 ))}
@@ -515,7 +499,7 @@ function MessagesPageContent() {
                   </div>
                 </ScrollArea>
 
-                <div className="border-t border-border px-4 py-4">
+                <div className="px-4 py-4">
                   <div className="flex gap-3 max-w-3xl mx-auto">
                     <Input
                       placeholder="Напиши сообщение..."
