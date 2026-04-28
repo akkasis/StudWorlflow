@@ -17,7 +17,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Платформа, где студенты находят тьюторов, договариваются о занятиях и помогают друг другу учиться эффективнее.
+              Платформа, где студенты находят стутьюторов, договариваются о занятиях и помогают друг другу учиться эффективнее.
             </p>
           </div>
 
@@ -27,12 +27,12 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link href="/marketplace" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Каталог тьюторов
+                  Каталог стутьюторов
                 </Link>
               </li>
               <li>
                 <Link href="/signup" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                  Стать тьютором
+                  Стать стутьютором
                 </Link>
               </li>
               <li>

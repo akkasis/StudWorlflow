@@ -18,7 +18,7 @@ export default function HelpPage() {
             </div>
             <h1 className="mt-4 text-4xl font-bold">Помощь по Skillent</h1>
             <p className="mt-3 text-muted-foreground">
-              Коротко и понятно: как найти тьютора, как создать анкету и как пользоваться сервисом.
+              Коротко и понятно: как найти стутьютора, как создать анкету и как пользоваться сервисом.
             </p>
           </div>
 
@@ -27,13 +27,13 @@ export default function HelpPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Search className="h-5 w-5 text-primary" />
-                  Как студенту найти тьютора
+                  Как студенту найти стутьютора
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>1. Открой каталог тьюторов и введи предмет, навык или тему.</p>
+                <p>1. Открой каталог стутьюторов и введи предмет, навык или тему.</p>
                 <p>2. Переключай сортировку: по популярности, цене или дате создания.</p>
-                <p>3. Открой анкету, посмотри отзывы и напиши тьютору в чат.</p>
+                <p>3. Открой анкету, посмотри отзывы и напиши стутьютору в чат.</p>
               </CardContent>
             </Card>
 
@@ -41,11 +41,11 @@ export default function HelpPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserRound className="h-5 w-5 text-primary" />
-                  Как тьютору оформить анкету
+                  Как стутьютору оформить анкету
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>1. Зарегистрируйся как тьютор.</p>
+                <p>1. Зарегистрируйся как стутьютор.</p>
                 <p>2. Заполни имя, курс, описание, навыки и цену за час.</p>
                 <p>3. Следи за отзывами и отвечай на сообщения в личном кабинете.</p>
               </CardContent>
@@ -59,7 +59,7 @@ export default function HelpPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>Сообщения открываются из профиля тьютора или через иконку чата в шапке.</p>
+                <p>Сообщения открываются из профиля стутьютора или через иконку чата в шапке.</p>
                 <p>Непрочитанные сообщения показываются цифрой рядом с иконкой.</p>
               </CardContent>
             </Card>
@@ -72,7 +72,7 @@ export default function HelpPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-muted-foreground">
-                <p>Студент может оставить тьютору только один отзыв.</p>
+                <p>Студент может оставить стутьютору только один отзыв.</p>
                 <p>Из этих отзывов формируется рейтинг и доверие к анкете.</p>
               </CardContent>
             </Card>
@@ -81,7 +81,7 @@ export default function HelpPage() {
           <div className="flex justify-center">
             <div className="flex flex-wrap justify-center gap-3">
               <Link href="/marketplace">
-                <Button>Перейти к тьюторам</Button>
+                <Button>Перейти к стутьюторам</Button>
               </Link>
               <Link href="/privacy">
                 <Button variant="outline">Конфиденциальность</Button>

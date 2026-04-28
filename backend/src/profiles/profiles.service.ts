@@ -143,7 +143,7 @@ export class ProfilesService {
     }
 
     if (profile.user.role !== 'tutor') {
-      throw new BadRequestException('Баннер доступен только тьюторам');
+      throw new BadRequestException('Баннер доступен только стутьюторам');
     }
 
     await this.profileMetaService.setBanner(profile.id, url);
@@ -489,7 +489,7 @@ export class ProfilesService {
     }
 
     if (tutorProfile.user.role !== 'tutor') {
-      throw new BadRequestException('Сохранять можно только тьюторов');
+      throw new BadRequestException('Сохранять можно только стутьюторов');
     }
 
     if (tutorProfile.user.id === userId) {

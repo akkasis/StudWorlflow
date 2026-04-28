@@ -398,15 +398,15 @@ export default function DashboardPage() {
                       <h2 className="text-xl font-semibold">{profile.name}</h2>
                       <p className="text-muted-foreground break-all">{user?.email}</p>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        {profile.university} • {profile.course} курс • {profile.role === "tutor" ? "Тьютор" : "Студент"}
+                        {profile.university} • {profile.course} курс • {profile.role === "tutor" ? "Стутьютор" : "Студент"}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Badge variant="secondary">
-                          {profile.role === "tutor" ? "Тьютор" : "Студент"}
+                          {profile.role === "tutor" ? "Стутьютор" : "Студент"}
                         </Badge>
                         {profile.avatar ? <Badge variant="outline">Аватар добавлен</Badge> : null}
                         {isTutor && profile.banner ? <Badge variant="outline">Баннер добавлен</Badge> : null}
-                        {profile.verified ? <Badge variant="outline">Подтвержденный тьютор</Badge> : null}
+                        {profile.verified ? <Badge variant="outline">Подтвержденный стутьютор</Badge> : null}
                       </div>
                     </div>
                   </div>
@@ -436,7 +436,7 @@ export default function DashboardPage() {
                           </p>
                         ) : (
                           <p className="mt-2 text-sm text-muted-foreground leading-6">
-                            Профиль готов к поиску тьютора и переписке.
+                            Профиль готов к поиску стутьютора и переписке.
                           </p>
                         )}
                       </CardContent>
@@ -514,7 +514,7 @@ export default function DashboardPage() {
                         <span className="font-medium">Идея на сегодня</span>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Выбери одного тьютора по нужному предмету и напиши ему первым в чат.
+                        Выбери одного стутьютора по нужному предмету и напиши ему первым в чат.
                       </p>
                       <Link href="/marketplace">
                         <Button className="w-full rounded-xl">Перейти в каталог</Button>
@@ -567,7 +567,7 @@ export default function DashboardPage() {
                   <div className="flex-1">
                     <div className="mb-6">
                       <h2 className="text-2xl font-bold">
-                        {isTutor ? "Анкета тьютора" : "Профиль студента"}
+                        {isTutor ? "Анкета стутьютора" : "Профиль студента"}
                       </h2>
                       <p className="mt-2 text-muted-foreground">
                         Заполни профиль так, чтобы другим было проще понять, кто ты и чем можешь помочь.

@@ -36,7 +36,7 @@ interface SupportThreadResponse {
 }
 
 const navItems = [
-  { href: "/marketplace", label: "Тьюторы", icon: Search },
+  { href: "/marketplace", label: "Стутьюторы", icon: Search },
   { href: "/help", label: "Помощь", icon: CircleHelp },
   { href: "/support", label: "Поддержка", icon: LifeBuoy },
 ]

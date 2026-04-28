@@ -65,7 +65,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
                     <Badge variant="secondary">
-                      {profile.role === "tutor" ? "Тьютор" : "Студент"}
+                      {profile.role === "tutor" ? "Стутьютор" : "Студент"}
                     </Badge>
                     {profile.verified ? (
                       <Badge variant="outline">Верифицированный пользователь</Badge>
@@ -115,11 +115,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
             <div className="space-y-6 lg:col-span-2">
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
-                  <CardTitle>О тьюторе</CardTitle>
+                  <CardTitle>О стутьюторе</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="leading-7 text-muted-foreground">
-                    {profile.description || "Тьютор пока не добавил описание."}
+                    {profile.description || "Стутьютор пока не добавил описание."}
                   </p>
                 </CardContent>
               </Card>
@@ -192,7 +192,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   !profile.availability?.primeTime &&
                   !profile.availability?.note ? (
                     <p className="text-sm leading-6 text-muted-foreground">
-                      Формат работы и график тьютор уточняет индивидуально. Обычно все детали можно быстро обсудить в чате.
+                      Формат работы и график стутьютор уточняет индивидуально. Обычно все детали можно быстро обсудить в чате.
                     </p>
                   ) : null}
 

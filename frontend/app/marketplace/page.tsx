@@ -107,9 +107,9 @@ export default function MarketplacePage() {
         <div className="mx-auto max-w-7xl px-4 py-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Каталог тьюторов</h1>
+              <h1 className="text-3xl font-bold mb-2">Каталог стутьюторов</h1>
               <p className="text-muted-foreground">
-                Выбирай тьюторов по рейтингу, цене и своим сохранениям.
+                Выбирай стутьюторов по рейтингу, цене и своим сохранениям.
               </p>
             </div>
 
@@ -177,7 +177,7 @@ export default function MarketplacePage() {
               <p className="text-lg font-semibold">Ничего не найдено</p>
               <p className="mt-2 text-muted-foreground">
                 {sortBy === "favorites"
-                  ? "Пока нет сохраненных тьюторов. Открой анкету и нажми на сердечко."
+                  ? "Пока нет сохраненных стутьюторов. Открой анкету и нажми на сердечко."
                   : "Попробуй изменить запрос или переключить сортировку."}
               </p>
             </div>

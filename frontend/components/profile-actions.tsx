@@ -174,7 +174,7 @@ export function ProfileActions({
           disabled={favoriteLoading}
         >
           <Heart className={`mr-2 h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
-          {isFavorite ? "В избранном" : "Сохранить тьютора"}
+          {isFavorite ? "В избранном" : "Сохранить стутьютора"}
         </Button>
       ) : null}
       <Button size="lg" className="w-full" onClick={handleInterest} disabled={sendingInterest}>

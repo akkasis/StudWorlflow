@@ -14,7 +14,7 @@ const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: 'Skillent',
-  description: 'Skillent — поиск тьюторов, отзывы, сообщения и личный кабинет для студентов.',
+  description: 'Skillent — поиск стутьюторов, отзывы, сообщения и личный кабинет для студентов.',
   generator: 'v0.app',
   icons: {
     icon: [

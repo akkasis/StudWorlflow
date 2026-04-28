@@ -294,7 +294,7 @@ function MessagesPageContent() {
   const selectedConversationLabel = useMemo(() => {
     if (!selectedConversation) return null
 
-    return `${selectedConversation.role === "tutor" ? "Тьютор" : "Студент"} • ${selectedConversation.university}`
+    return `${selectedConversation.role === "tutor" ? "Стутьютор" : "Студент"} • ${selectedConversation.university}`
   }, [selectedConversation])
 
   return (
@@ -313,7 +313,7 @@ function MessagesPageContent() {
             <div className="p-4 border-b border-border">
               <h2 className="text-xl font-semibold text-foreground">Сообщения</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                Пиши студентам и тьюторам напрямую.
+                Пиши студентам и стутьюторам напрямую.
               </p>
             </div>
 
@@ -321,7 +321,7 @@ function MessagesPageContent() {
               <div className="space-y-2.5 p-3">
                 {!loading && conversations.length === 0 && (
                   <div className="rounded-[2rem] border border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
-                    Пока нет диалогов. Открой профиль тьютора и начни переписку.
+                    Пока нет диалогов. Открой профиль стутьютора и начни переписку.
                   </div>
                 )}
 
@@ -367,7 +367,7 @@ function MessagesPageContent() {
                         ) : null}
                       </div>
                       <p className="mt-0.5 text-sm text-muted-foreground truncate">
-                        {conversation.role === "tutor" ? "Тьютор" : "Студент"} • {conversation.university}
+                        {conversation.role === "tutor" ? "Стутьютор" : "Студент"} • {conversation.university}
                       </p>
                       {conversation.isOnline ? (
                         <p className="mt-1 text-sm font-medium text-emerald-500">В сети</p>
@@ -397,7 +397,7 @@ function MessagesPageContent() {
                   <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground" />
                   <h3 className="mt-4 text-xl font-semibold">Диалог не выбран</h3>
                   <p className="mt-2 text-muted-foreground">
-                    Выбери существующий чат или напиши тьютору из его профиля.
+                    Выбери существующий чат или напиши стутьютору из его профиля.
                   </p>
                 </div>
               </div>

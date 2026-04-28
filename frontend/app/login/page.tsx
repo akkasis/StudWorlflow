@@ -152,7 +152,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 items-center justify-center bg-card/50">
         <div className="text-center px-12">
           <h2 className="text-4xl font-bold">
-            Найди подходящего тьютора
+            Найди подходящего стутьютора
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             Общайся, договаривайся о занятиях и двигайся к результату быстрее.

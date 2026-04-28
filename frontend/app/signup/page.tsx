@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, GraduationCap, BriefcaseBusiness, Sparkles, ArrowRight } from "lucide-react"
@@ -29,6 +29,14 @@ export default function SignupPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [acceptedLegal, setAcceptedLegal] = useState(false)
+
+  useEffect(() => {
+    const role = new URLSearchParams(window.location.search).get("role")
+
+    if (role === "student" || role === "tutor") {
+      setUserType(role)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,14 +99,14 @@ export default function SignupPage() {
         <div className="hidden lg:block lg:w-1/2">
           <Badge className="mb-6 bg-card/80 text-muted-foreground border-border/60">
             <Sparkles className="mr-2 h-3.5 w-3.5 text-primary" />
-            Сообщество студентов и тьюторов
+            Сообщество студентов и стутьюторов
           </Badge>
           <h1 className="max-w-xl text-5xl font-bold leading-tight">
             Учись и зарабатывай внутри{" "}
             <span className="text-gradient">Skillent</span>
           </h1>
           <p className="mt-6 max-w-xl text-lg text-muted-foreground">
-            Найди тьютора по своему предмету или создай анкету и помогай другим студентам.
+            Найди стутьютора по своему предмету или создай анкету и помогай другим студентам.
           </p>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2">
@@ -108,7 +116,7 @@ export default function SignupPage() {
               </div>
               <h3 className="mt-4 text-lg font-semibold">Для студентов</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Выбирай тьюторов, общайся в чате и оставляй честные отзывы.
+                Выбирай стутьюторов, общайся в чате и оставляй честные отзывы.
               </p>
             </div>
 
@@ -116,7 +124,7 @@ export default function SignupPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12">
                 <BriefcaseBusiness className="h-5 w-5 text-primary" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold">Для тьюторов</h3>
+              <h3 className="mt-4 text-lg font-semibold">Для стутьюторов</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 Создавай анкету, показывай навыки и получай новых учеников внутри кампуса.
               </p>
@@ -137,7 +145,7 @@ export default function SignupPage() {
               <div>
                 <CardTitle className="text-3xl">Создать аккаунт</CardTitle>
                 <p className="mt-2 text-muted-foreground">
-                  Быстрый старт для студентов и тьюторов.
+                  Быстрый старт для студентов и стутьюторов.
                 </p>
               </div>
             </CardHeader>
@@ -175,7 +183,7 @@ export default function SignupPage() {
                       >
                         <RadioGroupItem value="tutor" id="tutor" />
                         <BriefcaseBusiness className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Тьютор</span>
+                        <span className="font-medium">Стутьютор</span>
                       </Label>
                     </RadioGroup>
                   </Field>

@@ -342,7 +342,7 @@ export default function AdminPage() {
                     <SelectContent className="rounded-2xl border-border/70 bg-card/95 shadow-2xl">
                       <SelectItem value="all">Все роли</SelectItem>
                       <SelectItem value="student">Студент</SelectItem>
-                      <SelectItem value="tutor">Тьютор</SelectItem>
+                      <SelectItem value="tutor">Стутьютор</SelectItem>
                       <SelectItem value="moderator">Модератор</SelectItem>
                       <SelectItem value="admin">Администратор</SelectItem>
                     </SelectContent>
@@ -531,7 +531,7 @@ export default function AdminPage() {
                                     body: JSON.stringify({ description: e.target.value }),
                                   }).then(() => loadData())
                                 }
-                                placeholder="Описание анкеты тьютора"
+                                placeholder="Описание анкеты стутьютора"
                               />
                               <Input
                                 defaultValue={selectedUser.profile.pricePerHour || 0}
@@ -562,7 +562,7 @@ export default function AdminPage() {
                               </>
                             )}
                             <Button variant="outline" onClick={() => updateUser(selectedUser.id, { tutorVerified: !selectedUser.tutorVerified })}>
-                              {selectedUser.tutorVerified ? "Снять верификацию" : "Верифицировать тьютора"}
+                              {selectedUser.tutorVerified ? "Снять верификацию" : "Верифицировать стутьютора"}
                             </Button>
                             <Button variant="outline" onClick={() => updateUser(selectedUser.id, { banType: "temporary", banDays: 7, banReason: "Решение модерации" })}>
                               Бан 7 дней
@@ -655,7 +655,7 @@ export default function AdminPage() {
                           <div className="mb-4">
                             <h3 className="text-lg font-semibold">Отзывы пользователя</h3>
                             <p className="text-sm text-muted-foreground">
-                              Для тьютора здесь показаны отзывы на его анкету, а для студента или администратора отзывы, которые он оставлял сам.
+                              Для стутьютора здесь показаны отзывы на его анкету, а для студента или администратора отзывы, которые он оставлял сам.
                             </p>
                           </div>
 
