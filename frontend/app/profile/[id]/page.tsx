@@ -95,7 +95,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   <div className="w-full pt-2 sm:min-w-[220px] sm:w-auto">
                     <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
                       <p className="text-sm text-muted-foreground">Стоимость занятия</p>
-                      <p className="mt-1 text-2xl font-semibold">от {profile.priceFrom} ₽</p>
+                      <p className="mt-1 text-2xl font-semibold">от {profile.pricePerHour} ₽</p>
 
                       <div className="mt-4">
                         <ProfileActions
@@ -177,7 +177,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
               </Card>
 
               {profile.role === "tutor" ? (
-                <AddReview profileId={id} ownerUserId={profile.userId} />
+                <AddReview profileId={id} ownerUserId={profile.userId} reviews={profile.reviews} />
               ) : null}
             </div>
 

@@ -5,6 +5,22 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
+  private async recalculateProfileRating(profileId: number) {
+    const reviews = await this.prisma.review.findMany({
+      where: { profileId },
+      select: { rating: true },
+    });
+
+    const avg = reviews.length
+      ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+      : 0;
+
+    await this.prisma.profile.update({
+      where: { id: profileId },
+      data: { rating: avg },
+    });
+  }
+
   async create(userId: number, data: any) {
     if (data.rating < 1 || data.rating > 5) {
       throw new BadRequestException('Rating must be between 1 and 5');
@@ -63,20 +79,48 @@ export class ReviewsService {
       },
     });
 
-    // 🔥 пересчёт рейтинга
-    const reviews = await this.prisma.review.findMany({
-      where: { profileId: data.profileId },
-    });
-
-    const avg =
-      reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-
-    await this.prisma.profile.update({
-      where: { id: data.profileId },
-      data: { rating: avg },
-    });
+    await this.recalculateProfileRating(data.profileId);
 
     return review;
+  }
+
+  async update(userId: number, reviewId: number, data: any) {
+    if (data.rating < 1 || data.rating > 5) {
+      throw new BadRequestException('Rating must be between 1 and 5');
+    }
+
+    const review = await this.prisma.review.findUnique({
+      where: { id: reviewId },
+      include: {
+        user: {
+          select: { role: true },
+        },
+      },
+    });
+
+    if (!review) {
+      throw new BadRequestException('Review not found');
+    }
+
+    if (review.userId !== userId) {
+      throw new BadRequestException('You can edit only your own review');
+    }
+
+    if (review.user.role !== 'student') {
+      throw new BadRequestException('Only students can edit reviews');
+    }
+
+    const updatedReview = await this.prisma.review.update({
+      where: { id: reviewId },
+      data: {
+        rating: data.rating,
+        text: data.text,
+      },
+    });
+
+    await this.recalculateProfileRating(review.profileId);
+
+    return updatedReview;
   }
 
   async findByProfile(profileId: number) {

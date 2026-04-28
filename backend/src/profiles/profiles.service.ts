@@ -277,6 +277,7 @@ export class ProfilesService {
         const reviewState = await this.moderationService.getReviewState(review.id);
         return {
           id: review.id,
+          userId: review.userId,
           rating: review.rating,
           text: review.text,
           createdAt: review.createdAt,

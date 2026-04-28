@@ -12,14 +12,22 @@ import { useAppAlert } from "@/components/app-alert-provider"
 export function AddReview({
   profileId,
   ownerUserId,
+  reviews = [],
 }: {
   profileId: string
   ownerUserId?: string
+  reviews?: Array<{
+    id: number
+    userId: number
+    rating: number
+    text: string
+  }>
 }) {
   const { user } = useAuth()
   const { showAlert } = useAppAlert()
-  const [text, setText] = useState("")
-  const [rating, setRating] = useState(5)
+  const existingReview = reviews.find((review) => review.userId === Number(user?.id))
+  const [text, setText] = useState(existingReview?.text ?? "")
+  const [rating, setRating] = useState(existingReview?.rating ?? 5)
   const [loading, setLoading] = useState(false)
 
   if (user?.role === "tutor" || (ownerUserId && user?.id === ownerUserId)) {
@@ -37,8 +45,11 @@ export function AddReview({
     setLoading(true)
 
     try {
-      const res = await fetch(apiUrl("/reviews"), {
-        method: "POST",
+      const isEditing = Boolean(existingReview)
+      const res = await fetch(
+        apiUrl(isEditing ? `/reviews/${existingReview?.id}` : "/reviews"),
+        {
+        method: isEditing ? "PATCH" : "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -48,7 +59,8 @@ export function AddReview({
           rating,
           text,
         }),
-      })
+      },
+      )
 
       const data = await res.json()
 
@@ -68,7 +80,7 @@ export function AddReview({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Оставить отзыв</CardTitle>
+        <CardTitle>{existingReview ? "Редактировать отзыв" : "Оставить отзыв"}</CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -95,7 +107,7 @@ export function AddReview({
 
         {/* Button */}
         <Button onClick={submit} disabled={loading} className="w-full">
-          {loading ? "Отправка..." : "Отправить отзыв"}
+          {loading ? "Сохранение..." : existingReview ? "Сохранить изменения" : "Отправить отзыв"}
         </Button>
 
       </CardContent>
