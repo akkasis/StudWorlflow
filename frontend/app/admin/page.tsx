@@ -8,6 +8,13 @@ import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Search, ExternalLink, LifeBuoy, MessagesSquare } from "lucide-react"
@@ -323,17 +330,18 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <select
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                    className="h-10 rounded-xl border border-border bg-card px-3 text-sm outline-none"
-                  >
-                    <option value="all">Все роли</option>
-                    <option value="student">Студент</option>
-                    <option value="tutor">Тьютор</option>
-                    <option value="moderator">Модератор</option>
-                    <option value="admin">Администратор</option>
-                  </select>
+                  <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="h-10 rounded-xl border-border bg-card text-sm">
+                      <SelectValue placeholder="Все роли" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-2xl border-border/70 bg-card/95 shadow-2xl">
+                      <SelectItem value="all">Все роли</SelectItem>
+                      <SelectItem value="student">Студент</SelectItem>
+                      <SelectItem value="tutor">Тьютор</SelectItem>
+                      <SelectItem value="moderator">Модератор</SelectItem>
+                      <SelectItem value="admin">Администратор</SelectItem>
+                    </SelectContent>
+                  </Select>
 
                   <Button
                     variant="outline"

@@ -5,6 +5,13 @@ import Link from "next/link"
 import { Search, ArrowUpDown, CircleHelp, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StudentCard, StudentData } from "@/components/student-card"
@@ -85,17 +92,18 @@ export default function MarketplacePage() {
 
               <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-transparent text-sm outline-none"
-                >
-                  {SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[190px] border-0 bg-transparent shadow-none focus-visible:ring-0">
+                    <SelectValue placeholder="Сортировка" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-border/70 bg-card/95 shadow-2xl">
+                    {SORT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
