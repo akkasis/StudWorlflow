@@ -318,9 +318,9 @@ function MessagesPageContent() {
             </div>
 
             <ScrollArea className="flex-1 min-h-0">
-              <div className="divide-y divide-border">
+              <div className="space-y-3 p-3">
                 {!loading && conversations.length === 0 && (
-                  <div className="p-6 text-sm text-muted-foreground">
+                  <div className="rounded-[2rem] border border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
                     Пока нет диалогов. Открой профиль тьютора и начни переписку.
                   </div>
                 )}
@@ -329,8 +329,9 @@ function MessagesPageContent() {
                   <button
                     key={conversation.profileId}
                     className={cn(
-                      "w-full flex items-start gap-3 p-4 text-left hover:bg-secondary/50 transition-colors",
-                      selectedConversation?.profileId === conversation.profileId && "bg-secondary",
+                      "w-full rounded-[2rem] border border-border/70 bg-card/85 px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-secondary/45",
+                      selectedConversation?.profileId === conversation.profileId &&
+                        "border-primary/35 bg-secondary shadow-md shadow-primary/5",
                     )}
                     onClick={() => {
                       if (conversation.profileId === selectedConversation?.profileId) {
@@ -363,9 +364,11 @@ function MessagesPageContent() {
                         <p className="font-medium text-foreground truncate">
                           {conversation.name}
                         </p>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {formatConversationTime(conversation.timestamp)}
-                        </span>
+                        {!conversation.isOnline ? (
+                          <span className="text-xs text-muted-foreground shrink-0">
+                            {formatConversationTime(conversation.timestamp)}
+                          </span>
+                        ) : null}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {conversation.role === "tutor" ? "Тьютор" : "Студент"} • {conversation.university}
@@ -377,9 +380,13 @@ function MessagesPageContent() {
                         {conversation.lastMessage || "Начни разговор первым"}
                       </p>
                       <div className="mt-2 flex items-center justify-between gap-2">
-                        <p className="text-[11px] text-muted-foreground">
-                          Последняя активность: {formatConversationTime(conversation.timestamp)}
-                        </p>
+                        {!conversation.isOnline ? (
+                          <p className="text-[11px] text-muted-foreground">
+                            Последняя активность: {formatConversationTime(conversation.timestamp)}
+                          </p>
+                        ) : (
+                          <span />
+                        )}
                         {conversation.unreadCount > 0 ? (
                           <span className="text-[11px] font-medium text-primary">
                             {conversation.unreadCount} непрочит.
@@ -436,10 +443,11 @@ function MessagesPageContent() {
                     </p>
                     {selectedConversation.isOnline ? (
                       <p className="text-[11px] font-medium text-emerald-500">В сети</p>
-                    ) : null}
-                    <p className="text-[11px] text-muted-foreground">
-                      Последняя активность: {formatConversationTime(selectedConversation.timestamp)}
-                    </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground">
+                        Последняя активность: {formatConversationTime(selectedConversation.timestamp)}
+                      </p>
+                    )}
                   </div>
                   <Link href={`/profile/${selectedConversation.profileId}`}>
                     <Button variant="ghost" size="icon">
@@ -507,16 +515,20 @@ function MessagesPageContent() {
                   </div>
                 </ScrollArea>
 
-                <div className="p-4 border-t border-border bg-card">
+                <div className="border-t border-border px-4 py-4">
                   <div className="flex gap-3 max-w-3xl mx-auto">
                     <Input
                       placeholder="Напиши сообщение..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="flex-1"
+                      className="h-14 flex-1 rounded-full border-border/80 bg-transparent px-6 shadow-none"
                     />
-                    <Button onClick={() => void handleSendMessage()} disabled={!newMessage.trim() || sending}>
+                    <Button
+                      className="h-14 w-14 rounded-full"
+                      onClick={() => void handleSendMessage()}
+                      disabled={!newMessage.trim() || sending}
+                    >
                       <Send className="h-4 w-4" />
                       <span className="sr-only">Отправить сообщение</span>
                     </Button>
