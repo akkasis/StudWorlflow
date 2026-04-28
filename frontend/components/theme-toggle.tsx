@@ -36,10 +36,10 @@ export function ThemeToggle() {
           isDark ? "translate-x-9" : "translate-x-0",
         )}
       >
-        <span className="relative flex h-8 w-8 items-center justify-center rounded-full">
+        <span className="relative grid h-8 w-8 place-items-center rounded-full">
           <Sun
             className={cn(
-              "absolute h-4 w-4 text-amber-950 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "col-start-1 row-start-1 h-4 w-4 text-amber-950 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
               isDark
                 ? "scale-50 rotate-90 opacity-0"
                 : "scale-100 rotate-0 opacity-100",
@@ -47,7 +47,7 @@ export function ThemeToggle() {
           />
           <Moon
             className={cn(
-              "absolute h-4 w-4 text-slate-900 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
+              "col-start-1 row-start-1 h-4 w-4 text-slate-900 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]",
               isDark
                 ? "scale-100 rotate-0 opacity-100"
                 : "scale-50 -rotate-90 opacity-0",

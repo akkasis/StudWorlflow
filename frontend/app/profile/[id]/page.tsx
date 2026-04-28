@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { MapPin, Clock, CheckCircle } from "lucide-react"
+import { MapPin, Clock, CheckCircle, BookOpen, Sparkles, MessageCircleMore } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -48,10 +48,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 style={{ backgroundImage: `url(${profile.banner})` }}
               />
             ) : (
-              <div className="h-32 bg-gradient-to-r from-primary/15 via-accent/50 to-primary/10" />
+              <div className="h-32 bg-[radial-gradient(circle_at_top_left,rgba(121,168,214,0.22),transparent_42%),linear-gradient(135deg,rgba(121,168,214,0.14),rgba(165,208,226,0.08),rgba(121,168,214,0.16))]" />
             )}
 
             <CardContent className="relative pt-0 pb-6 px-6">
+              <div className="pointer-events-none absolute inset-x-6 top-5 h-24 rounded-[2rem] bg-[radial-gradient(circle_at_top_right,rgba(121,168,214,0.12),transparent_45%)]" />
               <div className="flex flex-col sm:flex-row gap-6 items-start">
                 <UserAvatar
                   src={profile.avatar}
@@ -63,7 +64,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
                 <div className="flex-1 pt-2">
                   <div className="flex flex-wrap items-center gap-3">
-                    <h1 className="text-3xl font-bold">{profile.name}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
                     <Badge variant="secondary">
                       {profile.role === "tutor" ? "Тьютор РАНХиГС" : "Студент РАНХиГС"}
                     </Badge>
@@ -85,10 +86,40 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                       reviewCount={profile.reviewCount}
                     />
                   </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <BookOpen className="h-3.5 w-3.5 text-primary" />
+                        Курс
+                      </div>
+                      <p className="mt-2 text-lg font-semibold">{profile.course}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        Отзывов
+                      </div>
+                      <p className="mt-2 text-lg font-semibold">{profile.reviewCount}</p>
+                    </div>
+                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
+                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <MessageCircleMore className="h-3.5 w-3.5 text-primary" />
+                        Формат
+                      </div>
+                      <p className="mt-2 text-sm font-semibold">
+                        {profile.availability?.formats?.length
+                          ? profile.availability.formats
+                              .map((item: string) => (item === "online" ? "Онлайн" : "Оффлайн"))
+                              .join(", ")
+                          : "Уточняется в чате"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="w-full sm:w-[280px]">
-                  <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
+                  <div className="rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] p-4 shadow-sm">
                     <div className="text-right mb-4">
                       <span className="text-3xl font-bold">
                         {profile.pricePerHour} ₽
@@ -113,7 +144,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   <CardTitle>О тьюторе</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-7">
+                  <p className="text-muted-foreground leading-7 text-[15px]">
                     {profile.description || "Тьютор пока не добавил описание."}
                   </p>
                 </CardContent>
@@ -123,10 +154,10 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 <CardHeader>
                   <CardTitle>Навыки и направления</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
+                <CardContent className="flex flex-wrap gap-2.5">
                   {profile.tags.length > 0 ? (
                     profile.tags.map((tag: string) => (
-                      <Badge key={tag} variant="secondary">
+                      <Badge key={tag} variant="secondary" className="rounded-full px-3 py-1 text-sm">
                         #{tag}
                       </Badge>
                     ))
