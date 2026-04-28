@@ -2,21 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { Search, ArrowRight, Zap, Shield, Users, Star } from "lucide-react"
+import { Search, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StudentCard, StudentData } from "@/components/student-card"
 import { apiUrl } from "@/lib/api"
-
-// ❌ УДАЛЯЕМ mock-data
-// import { students, categories, testimonials } from "@/lib/mock-data"
-
-// 👉 временно оставим категории и отзывы как есть
-import { categories, testimonials } from "@/lib/mock-data"
 
 export default function HomePage() {
   const [students, setStudents] = useState<StudentData[]>([])
@@ -49,11 +41,6 @@ export default function HomePage() {
           
           <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-4xl mx-auto">
-
-              <Badge className="mb-6 px-4 py-2 bg-secondary border-border/50 text-muted-foreground">
-                <Zap className="h-3.5 w-3.5 mr-2 text-primary" />
-                Выбирают студенты
-              </Badge>
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
                 Найди тьютора, который{" "}
@@ -66,10 +53,10 @@ export default function HomePage() {
 
               <div className="mt-10 flex w-full max-w-4xl flex-col gap-3 mx-auto sm:flex-row sm:items-stretch">
                 <div className="relative min-w-0 flex-1">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
                     placeholder="С чем нужна помощь?"
-                    className="h-14 pl-12 text-base"
+                    className="h-14 border-2 border-primary/35 bg-card/95 pl-12 text-base shadow-md shadow-primary/10 hover:border-primary/60 focus-visible:border-primary dark:border-border dark:bg-card/70 dark:shadow-none"
                   />
                 </div>
 
