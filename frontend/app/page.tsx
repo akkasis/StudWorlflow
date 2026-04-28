@@ -64,17 +64,17 @@ export default function HomePage() {
                 Общайся со студентами-тьюторами, которые уже отлично прошли твои предметы.
               </p>
 
-              <div className="mt-10 flex gap-3 max-w-xl mx-auto">
-                <div className="relative flex-1">
+              <div className="mt-10 flex w-full max-w-4xl flex-col gap-3 mx-auto sm:flex-row sm:items-stretch">
+                <div className="relative min-w-0 flex-1">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                     placeholder="С чем нужна помощь?"
-                    className="pl-12 h-14"
+                    className="h-14 pl-12 text-base"
                   />
                 </div>
 
-                <Link href="/marketplace">
-                  <Button size="lg">
+                <Link href="/marketplace" className="shrink-0">
+                  <Button size="lg" className="h-14 w-full px-8 sm:w-auto">
                     Найти тьютора
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

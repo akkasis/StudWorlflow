@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useLayoutEffect,
   type ReactNode,
 } from 'react'
 
@@ -25,19 +26,25 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light')
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') {
+      return 'light'
+    }
+
+    const savedTheme = localStorage.getItem('skillent-theme')
+    return savedTheme === 'dark' ? 'dark' : 'light'
+  })
+
+  useLayoutEffect(() => {
+    applyTheme(theme)
+  }, [theme])
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('skillent-theme')
-    const initialTheme = savedTheme === 'dark' ? 'dark' : 'light'
-    setThemeState(initialTheme)
-    applyTheme(initialTheme)
-  }, [])
+    localStorage.setItem('skillent-theme', theme)
+  }, [theme])
 
   const setTheme = (nextTheme: Theme) => {
     setThemeState(nextTheme)
-    localStorage.setItem('skillent-theme', nextTheme)
-    applyTheme(nextTheme)
   }
 
   const toggleTheme = () => {

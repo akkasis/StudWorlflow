@@ -1,32 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Moon, Sun } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { useTheme } from "@/components/theme-provider"
+import { cn } from "@/lib/utils"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return (
-      <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-2.5 py-1.5">
-        <Sun className="h-4 w-4 text-primary" />
-        <Switch checked={false} disabled aria-label="Theme toggle" />
-        <Moon className="h-4 w-4 text-muted-foreground" />
-      </div>
-    )
-  }
 
   const isDark = theme === "dark"
 
   return (
-    <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-2.5 py-1.5 shadow-sm">
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-full px-2.5 py-1.5 shadow-sm transition-colors",
+        isDark
+          ? "border border-border/60 bg-card/70"
+          : "border border-primary/30 bg-white/95 ring-1 ring-primary/15",
+      )}
+    >
       <Sun className={`h-4 w-4 ${isDark ? "text-muted-foreground" : "text-primary"}`} />
       <Switch
         checked={isDark}

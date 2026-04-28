@@ -52,6 +52,7 @@ export class AuthService implements OnModuleInit {
       email,
       password,
       role = 'student',
+      acceptedLegal,
       profile,
       name,
       course,
@@ -63,6 +64,12 @@ export class AuthService implements OnModuleInit {
     const normalizedEmail = String(email || '').trim().toLowerCase();
     if (!normalizedEmail) {
       throw new BadRequestException('Email обязателен');
+    }
+
+    if (!acceptedLegal) {
+      throw new BadRequestException(
+        'Нужно согласиться с пользовательским соглашением и политикой конфиденциальности',
+      );
     }
 
     const userExists = await this.prisma.user.findUnique({

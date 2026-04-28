@@ -11,6 +11,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
@@ -27,9 +28,19 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [acceptedLegal, setAcceptedLegal] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!acceptedLegal) {
+      showAlert(
+        "Нужно согласие",
+        "Чтобы зарегистрироваться, нужно принять пользовательское соглашение и политику конфиденциальности.",
+      )
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -48,6 +59,7 @@ export default function SignupPage() {
           description: "",
           tags: [],
           pricePerHour: 0,
+          acceptedLegal,
         }),
       })
 
@@ -214,7 +226,32 @@ export default function SignupPage() {
                     </div>
                   </Field>
 
-                  <Button type="submit" disabled={isLoading} className="h-12 w-full">
+                  <Field>
+                    <Label
+                      htmlFor="accepted-legal"
+                      className="flex items-start gap-3 rounded-2xl border border-border/70 bg-card/70 p-4 text-sm leading-6"
+                    >
+                      <Checkbox
+                        id="accepted-legal"
+                        checked={acceptedLegal}
+                        onCheckedChange={(checked) => setAcceptedLegal(checked === true)}
+                        className="mt-0.5"
+                      />
+                      <span className="text-muted-foreground">
+                        Я соглашаюсь с{" "}
+                        <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">
+                          пользовательским соглашением
+                        </Link>{" "}
+                        и{" "}
+                        <Link href="/privacy" target="_blank" className="font-medium text-primary hover:underline">
+                          политикой конфиденциальности
+                        </Link>
+                        .
+                      </span>
+                    </Label>
+                  </Field>
+
+                  <Button type="submit" disabled={isLoading || !acceptedLegal} className="h-12 w-full">
                     {isLoading ? "Создание..." : "Продолжить"}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

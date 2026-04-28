@@ -113,21 +113,21 @@ export default function MarketplacePage() {
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-              <div className="relative min-w-[250px]">
+            <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
+              <div className="relative min-w-0 flex-1 sm:min-w-[360px]">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input
                   placeholder="Поиск по имени, навыкам или описанию..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12"
+                  className="h-14 pl-12 text-base"
                 />
               </div>
 
-              <div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-3 py-2">
+              <div className="flex h-14 shrink-0 items-center gap-2 rounded-2xl border border-border bg-card px-3">
                 <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
                 <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[150px] border-0 bg-transparent px-1 shadow-none focus-visible:ring-0">
+                  <SelectTrigger className="w-[210px] border-0 bg-transparent px-1 shadow-none focus-visible:ring-0">
                     <SelectValue placeholder="Сортировка" />
                   </SelectTrigger>
                   <SelectContent className="rounded-2xl border-border/70 bg-card/95 shadow-2xl">
