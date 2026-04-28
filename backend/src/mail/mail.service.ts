@@ -1,46 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { appConfig } from '../config/app.config';
 
-type MailTransporter = {
-  sendMail: (options: {
-    from: string;
-    to: string;
-    subject: string;
-    text: string;
-    html: string;
-  }) => Promise<unknown>;
-};
-
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
-  private readonly transporter: MailTransporter | null;
 
   constructor() {
-    if (!appConfig.smtpHost) {
-      this.transporter = null;
+    if (!appConfig.resendApiKey) {
       this.logger.warn(
-        'SMTP is not configured. Email actions will be logged instead of sent.',
+        'Resend API is not configured. Email actions will be logged instead of sent.',
       );
-      return;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { createTransport } = require('nodemailer') as {
-      createTransport: (options: Record<string, unknown>) => MailTransporter;
-    };
-
-    this.transporter = createTransport({
-      host: appConfig.smtpHost,
-      port: appConfig.smtpPort,
-      secure: appConfig.smtpPort === 465,
-      auth: appConfig.smtpUser
-        ? {
-            user: appConfig.smtpUser,
-            pass: appConfig.smtpPassword,
-          }
-        : undefined,
-    });
   }
 
   async sendVerificationEmail(email: string, verificationUrl: string) {
@@ -75,17 +45,37 @@ export class MailService {
     text: string,
     actionUrl: string,
   ) {
-    if (!this.transporter) {
+    if (!appConfig.resendApiKey) {
       this.logger.log(`${subject} for ${email}: ${actionUrl}`);
       return;
     }
 
-    await this.transporter.sendMail({
-      from: appConfig.smtpFrom,
-      to: email,
-      subject,
-      text,
-      html: `<p>${text.replace(/\n/g, '<br/>')}</p>`,
+    const html = text
+      .split('\n')
+      .map((line) => (line ? `<p>${line}</p>` : '<br/>'))
+      .join('');
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${appConfig.resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: appConfig.emailFrom,
+        to: [email],
+        subject,
+        text,
+        html,
+      }),
     });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      this.logger.error(
+        `Resend request failed with status ${response.status}: ${errorText}`,
+      );
+      throw new Error('Не удалось отправить письмо. Проверь настройки Resend.');
+    }
   }
 }

@@ -23,6 +23,11 @@ export const appConfig = {
   jwtSecret: process.env.JWT_SECRET || DEFAULT_DEV_JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   corsOrigins: parseOrigins(process.env.CORS_ORIGIN),
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom:
+    process.env.EMAIL_FROM ||
+    process.env.SMTP_FROM ||
+    'Skillent <no-reply@skillent.local>',
   smtpHost: process.env.SMTP_HOST || '',
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpUser: process.env.SMTP_USER || '',
