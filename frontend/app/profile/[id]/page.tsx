@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { MapPin, Clock, CheckCircle, BookOpen, Sparkles, MessageCircleMore } from "lucide-react"
+import { MapPin, Clock, CheckCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -48,12 +48,11 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 style={{ backgroundImage: `url(${profile.banner})` }}
               />
             ) : (
-              <div className="h-32 bg-[radial-gradient(circle_at_top_left,rgba(121,168,214,0.22),transparent_42%),linear-gradient(135deg,rgba(121,168,214,0.14),rgba(165,208,226,0.08),rgba(121,168,214,0.16))]" />
+              <div className="h-32 bg-gradient-to-r from-primary/15 via-accent/50 to-primary/10" />
             )}
 
-            <CardContent className="relative pt-0 pb-6 px-6">
-              <div className="pointer-events-none absolute inset-x-6 top-5 h-24 rounded-[2rem] bg-[radial-gradient(circle_at_top_right,rgba(121,168,214,0.12),transparent_45%)]" />
-              <div className="flex flex-col sm:flex-row gap-6 items-start">
+            <CardContent className="relative px-6 pb-6 pt-0">
+              <div className="flex flex-col items-start gap-6 sm:flex-row">
                 <UserAvatar
                   src={profile.avatar}
                   name={profile.name}
@@ -68,11 +67,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <Badge variant="secondary">
                       {profile.role === "tutor" ? "Тьютор РАНХиГС" : "Студент РАНХиГС"}
                     </Badge>
-                    {profile.verified && <Badge variant="outline">Верифицированный пользователь</Badge>}
-                    {profile.isOnline ? <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">В сети</Badge> : null}
+                    {profile.verified ? (
+                      <Badge variant="outline">Верифицированный пользователь</Badge>
+                    ) : null}
+                    {profile.isOnline ? (
+                      <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">В сети</Badge>
+                    ) : null}
                   </div>
 
-                  <div className="flex items-center gap-2 text-muted-foreground mt-2">
+                  <div className="mt-2 flex items-center gap-2 text-muted-foreground">
                     <MapPin className="h-4 w-4" />
                     <span>{profile.university}</span>
                     <span>•</span>
@@ -86,65 +89,36 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                       reviewCount={profile.reviewCount}
                     />
                   </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <BookOpen className="h-3.5 w-3.5 text-primary" />
-                        Курс
-                      </div>
-                      <p className="mt-2 text-lg font-semibold">{profile.course}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <Sparkles className="h-3.5 w-3.5 text-primary" />
-                        Отзывов
-                      </div>
-                      <p className="mt-2 text-lg font-semibold">{profile.reviewCount}</p>
-                    </div>
-                    <div className="rounded-2xl border border-border/70 bg-card/75 px-4 py-3 shadow-sm">
-                      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                        <MessageCircleMore className="h-3.5 w-3.5 text-primary" />
-                        Формат
-                      </div>
-                      <p className="mt-2 text-sm font-semibold">
-                        {profile.availability?.formats?.length
-                          ? profile.availability.formats
-                              .map((item: string) => (item === "online" ? "Онлайн" : "Оффлайн"))
-                              .join(", ")
-                          : "Уточняется в чате"}
-                      </p>
-                    </div>
-                  </div>
                 </div>
 
-                <div className="w-full sm:w-[280px]">
-                  <div className="rounded-[1.75rem] border border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] p-4 shadow-sm">
-                    <div className="text-right mb-4">
-                      <span className="text-3xl font-bold">
-                        {profile.pricePerHour} ₽
-                      </span>
-                      <span className="text-muted-foreground">/час</span>
+                {profile.role === "tutor" ? (
+                  <div className="w-full pt-2 sm:min-w-[220px] sm:w-auto">
+                    <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
+                      <p className="text-sm text-muted-foreground">Стоимость занятия</p>
+                      <p className="mt-1 text-2xl font-semibold">от {profile.priceFrom} ₽</p>
+
+                      <div className="mt-4">
+                        <ProfileActions
+                          profileId={id}
+                          ownerUserId={profile.userId}
+                          role={profile.role}
+                        />
+                      </div>
                     </div>
-                    <ProfileActions
-                      profileId={id}
-                      ownerUserId={profile.userId}
-                      role={profile.role}
-                    />
                   </div>
-                </div>
+                ) : null}
               </div>
             </CardContent>
           </Card>
 
-          <div className="grid lg:grid-cols-3 gap-6 mt-6">
-            <div className="lg:col-span-2 space-y-6">
+          <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
               <Card className="border-border/70 shadow-sm">
                 <CardHeader>
                   <CardTitle>О тьюторе</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-7 text-[15px]">
+                  <p className="leading-7 text-muted-foreground">
                     {profile.description || "Тьютор пока не добавил описание."}
                   </p>
                 </CardContent>
@@ -154,17 +128,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 <CardHeader>
                   <CardTitle>Навыки и направления</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-wrap gap-2.5">
+                <CardContent className="flex flex-wrap gap-2">
                   {profile.tags.length > 0 ? (
                     profile.tags.map((tag: string) => (
-                      <Badge key={tag} variant="secondary" className="rounded-full px-3 py-1 text-sm">
+                      <Badge key={tag} variant="secondary">
                         #{tag}
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Навыки пока не добавлены.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Навыки пока не добавлены.</p>
                   )}
                 </CardContent>
               </Card>
@@ -175,21 +147,15 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                 </CardHeader>
 
                 <CardContent className="space-y-4">
-                  {profile.reviews.length === 0 && (
+                  {profile.reviews.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                       Пока нет отзывов. Они появятся после первых занятий.
                     </p>
-                  )}
+                  ) : null}
 
                   {profile.reviews.map((r: any, index: number) => (
                     <div key={r.id}>
-                      <div
-                        className={`rounded-2xl border p-4 ${
-                          r.verified
-                            ? "border-primary/40 bg-primary/8 shadow-sm"
-                            : "border-border/70 bg-card/70"
-                        }`}
-                      >
+                      <div className="rounded-lg border p-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{r.userName}</p>
@@ -201,22 +167,18 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                           </div>
                           <Badge variant="secondary">★ {r.rating}</Badge>
                         </div>
-                        <p className="mt-2 text-sm text-muted-foreground leading-6">
-                          {r.text}
-                        </p>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{r.text}</p>
                       </div>
 
-                      {index < profile.reviews.length - 1 && (
-                        <Separator className="mt-4" />
-                      )}
+                      {index < profile.reviews.length - 1 ? <Separator className="mt-4" /> : null}
                     </div>
                   ))}
                 </CardContent>
               </Card>
 
-              {profile.role === "tutor" && (
+              {profile.role === "tutor" ? (
                 <AddReview profileId={id} ownerUserId={profile.userId} />
-              )}
+              ) : null}
             </div>
 
             <div className="space-y-6">
@@ -229,7 +191,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   !profile.availability?.primeDays?.length &&
                   !profile.availability?.primeTime &&
                   !profile.availability?.note ? (
-                    <p className="text-sm text-muted-foreground leading-6">
+                    <p className="text-sm leading-6 text-muted-foreground">
                       Формат работы и график тьютор уточняет индивидуально. Обычно все детали можно быстро обсудить в чате.
                     </p>
                   ) : null}
@@ -260,7 +222,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   ) : null}
 
                   <div className="flex items-start gap-3">
-                    <CheckCircle className="h-4 w-4 text-primary mt-1" />
+                    <CheckCircle className="mt-1 h-4 w-4 text-primary" />
                     <span>
                       {profile.availability?.note || "Свободный график, формат работы по договоренности"}
                     </span>

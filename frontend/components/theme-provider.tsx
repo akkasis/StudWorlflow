@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useLayoutEffect,
-  type ReactNode,
-} from 'react'
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 
 type Theme = 'light' | 'dark'
 
@@ -35,21 +28,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return savedTheme === 'dark' ? 'dark' : 'light'
   })
 
-  useLayoutEffect(() => {
-    applyTheme(theme)
-  }, [theme])
-
   useEffect(() => {
+    applyTheme(theme)
     localStorage.setItem('skillent-theme', theme)
   }, [theme])
 
   const setTheme = (nextTheme: Theme) => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.add('theme-animate')
-      window.setTimeout(() => {
-        document.documentElement.classList.remove('theme-animate')
-      }, 420)
-    }
     setThemeState(nextTheme)
   }
 
