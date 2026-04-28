@@ -52,15 +52,35 @@ export class ProfilesController {
   @Post('upload/avatar')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
-  uploadAvatar(@Req() req: any, @UploadedFile() file: any) {
-    return this.storageService.uploadProfileImage(file, 'avatar', req.user.userId);
+  async uploadAvatar(@Req() req: any, @UploadedFile() file: any) {
+    const uploaded = await this.storageService.uploadProfileImage(
+      file,
+      'avatar',
+      req.user.userId,
+    );
+    await this.profilesService.updateUploadedAsset(
+      req.user.userId,
+      'avatar',
+      uploaded.url,
+    );
+    return uploaded;
   }
 
   @Post('upload/banner')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
-  uploadBanner(@Req() req: any, @UploadedFile() file: any) {
-    return this.storageService.uploadProfileImage(file, 'banner', req.user.userId);
+  async uploadBanner(@Req() req: any, @UploadedFile() file: any) {
+    const uploaded = await this.storageService.uploadProfileImage(
+      file,
+      'banner',
+      req.user.userId,
+    );
+    await this.profilesService.updateUploadedAsset(
+      req.user.userId,
+      'banner',
+      uploaded.url,
+    );
+    return uploaded;
   }
 
   @Get()

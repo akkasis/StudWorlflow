@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { Send, LifeBuoy } from "lucide-react"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
@@ -17,6 +17,7 @@ interface SupportThreadSummary {
   email: string
   lastMessage: string
   updatedAt: string
+  lastSenderUserId?: number | null
 }
 
 interface SupportMessage {
@@ -36,6 +37,11 @@ export default function SupportPage() {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
   const isModerator = user?.role === "admin" || user?.role === "moderator"
+  const formatTime = (value: string) =>
+    new Date(value).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })
 
   const markSupportSeen = (items: SupportMessage[]) => {
     if (!user || isModerator) return
@@ -44,24 +50,24 @@ export default function SupportPage() {
     localStorage.setItem(`support-last-seen-${user.id}`, seenAt)
   }
 
-  const loadThreads = async () => {
+  const loadThreads = useCallback(async () => {
     if (!token) return
     const res = await fetch(apiUrl("/support/threads"), {
+      cache: "no-store",
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
     setThreads(data)
-    if (!activeThreadId && data[0]) {
-      setActiveThreadId(data[0].userId)
-    }
-  }
+    setActiveThreadId((current) => current || data[0]?.userId || null)
+  }, [token])
 
-  const loadMessages = async (threadId?: string | null) => {
+  const loadMessages = useCallback(async (threadId?: string | null) => {
     if (!token) return
     const url = isModerator && threadId
       ? apiUrl(`/support/thread/${threadId}`)
       : apiUrl("/support/thread")
     const res = await fetch(url, {
+      cache: "no-store",
       headers: { Authorization: `Bearer ${token}` },
     })
     const data = await res.json()
@@ -69,16 +75,16 @@ export default function SupportPage() {
     if (!isModerator) {
       markSupportSeen(data.messages || [])
     }
-  }
+  }, [isModerator, token, user?.id])
 
   useEffect(() => {
     void loadThreads()
-  }, [])
+  }, [loadThreads])
 
   useEffect(() => {
     if (!activeThreadId && isModerator) return
     void loadMessages(activeThreadId)
-  }, [activeThreadId, isModerator])
+  }, [activeThreadId, isModerator, loadMessages])
 
   useEffect(() => {
     if (!token) return
@@ -89,7 +95,7 @@ export default function SupportPage() {
     }, 5000)
 
     return () => window.clearInterval(interval)
-  }, [activeThreadId, token, isModerator])
+  }, [activeThreadId, loadMessages, loadThreads, token])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -116,6 +122,13 @@ export default function SupportPage() {
     await loadMessages(activeThreadId)
   }
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault()
+      void sendMessage()
+    }
+  }
+
   return (
     <Protected>
       <div className="h-[100dvh] overflow-hidden bg-background">
@@ -138,7 +151,12 @@ export default function SupportPage() {
                       )}
                       onClick={() => setActiveThreadId(thread.userId)}
                     >
-                      <p className="font-medium">{thread.name}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-medium">{thread.name}</p>
+                        <span className="text-[11px] text-muted-foreground">
+                          {formatTime(thread.updatedAt)}
+                        </span>
+                      </div>
                       <p className="text-xs text-muted-foreground truncate">{thread.lastMessage || thread.email}</p>
                     </button>
                   ))}
@@ -188,6 +206,16 @@ export default function SupportPage() {
                       )}
                     >
                       <p className="text-sm">{message.text}</p>
+                      <p
+                        className={cn(
+                          "mt-1 text-xs",
+                          message.senderUserId === Number(user?.id)
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {formatTime(message.createdAt)}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -200,6 +228,7 @@ export default function SupportPage() {
                 <Input
                   value={text}
                   onChange={(e) => setText(e.target.value)}
+                  onKeyDown={handleKeyDown}
                   placeholder="Напишите сообщение поддержке..."
                 />
                 <Button onClick={sendMessage}>

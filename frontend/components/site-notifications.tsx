@@ -105,6 +105,7 @@ export function SiteNotifications() {
     const poll = async () => {
       try {
         const conversationRes = await fetch(apiUrl("/messages/conversations"), {
+          cache: "no-store",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -141,6 +142,7 @@ export function SiteNotifications() {
 
         if (user.role === "admin" || user.role === "moderator") {
           const supportRes = await fetch(apiUrl("/support/threads"), {
+            cache: "no-store",
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -169,6 +171,7 @@ export function SiteNotifications() {
           }
         } else {
           const supportRes = await fetch(apiUrl("/support/thread"), {
+            cache: "no-store",
             headers: {
               Authorization: `Bearer ${token}`,
             },

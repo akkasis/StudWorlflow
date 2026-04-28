@@ -111,6 +111,45 @@ export class ProfilesService {
     return this.findByUserId(userId);
   }
 
+  async updateUploadedAsset(
+    userId: number,
+    kind: 'avatar' | 'banner',
+    url: string,
+  ) {
+    const profile = await this.prisma.profile.findUnique({
+      where: { userId },
+      include: {
+        user: {
+          select: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    if (!profile) {
+      throw new BadRequestException('Profile not found');
+    }
+
+    if (kind === 'avatar') {
+      await this.prisma.profile.update({
+        where: { userId },
+        data: {
+          avatarUrl: url,
+        },
+      });
+
+      return { url };
+    }
+
+    if (profile.user.role !== 'tutor') {
+      throw new BadRequestException('Баннер доступен только тьюторам');
+    }
+
+    await this.profileMetaService.setBanner(profile.id, url);
+    return { url };
+  }
+
   async findAll(query: any) {
     const sort = query.sort;
     const orderBy =

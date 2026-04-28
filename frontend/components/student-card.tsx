@@ -49,13 +49,7 @@ export function StudentCard({ student }: StudentCardProps) {
               isOnline={student.isOnline}
               className="h-14 w-14 ring-2 ring-border"
               fallbackClassName="bg-primary/20 text-primary font-semibold text-lg"
-              indicatorClassName={student.verified ? "bottom-4 right-0" : ""}
             />
-            {student.verified && (
-              <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
-                <Verified className="h-3 w-3 text-primary-foreground" />
-              </div>
-            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate text-lg">

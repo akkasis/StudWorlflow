@@ -63,6 +63,7 @@ function MessagesPageContent() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const selectedProfileIdRef = useRef<string | null>(null)
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
@@ -84,10 +85,15 @@ function MessagesPageContent() {
     })
   }
 
+  useEffect(() => {
+    selectedProfileIdRef.current = selectedConversation?.profileId || null
+  }, [selectedConversation?.profileId])
+
   const loadConversations = useCallback(async () => {
     if (!token) return []
 
     const res = await fetch(apiUrl("/messages/conversations"), {
+      cache: "no-store",
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -99,10 +105,10 @@ function MessagesPageContent() {
 
     const data = await res.json()
     setConversations(data)
-    if (selectedConversation) {
+    if (selectedProfileIdRef.current) {
       const freshSelected = data.find(
         (conversation: ConversationSummary) =>
-          conversation.profileId === selectedConversation.profileId,
+          conversation.profileId === selectedProfileIdRef.current,
       )
 
       if (freshSelected) {
@@ -118,12 +124,13 @@ function MessagesPageContent() {
       }
     }
     return data as ConversationSummary[]
-  }, [selectedConversation, token])
+  }, [token])
 
   const loadConversation = useCallback(async (profileId: string) => {
     if (!token) return null
 
     const res = await fetch(apiUrl(`/messages/${profileId}`), {
+      cache: "no-store",
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -135,6 +142,7 @@ function MessagesPageContent() {
 
     const data: ConversationResponse = await res.json()
     setMessagesList(data.messages)
+    selectedProfileIdRef.current = profileId
     setSelectedConversation((current) => {
       if (current?.profileId === profileId) {
         return {
@@ -198,7 +206,10 @@ function MessagesPageContent() {
     const bootstrap = async () => {
       try {
         const conversationList = await loadConversations()
-        const initialProfileId = requestedProfileId || conversationList[0]?.profileId
+        const initialProfileId =
+          requestedProfileId ||
+          selectedProfileIdRef.current ||
+          conversationList[0]?.profileId
 
         if (initialProfileId && isMounted) {
           await loadConversation(initialProfileId)
@@ -220,7 +231,7 @@ function MessagesPageContent() {
   }, [loadConversation, loadConversations, requestedProfileId, token])
 
   useEffect(() => {
-    if (!token || !selectedConversation) return
+    if (!token || !selectedConversation?.profileId) return
 
     const interval = window.setInterval(() => {
       void loadConversations()
@@ -228,7 +239,7 @@ function MessagesPageContent() {
     }, 5000)
 
     return () => window.clearInterval(interval)
-  }, [loadConversation, loadConversations, selectedConversation, token])
+  }, [loadConversation, loadConversations, selectedConversation?.profileId, token])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" })
@@ -322,8 +333,16 @@ function MessagesPageContent() {
                       selectedConversation?.profileId === conversation.profileId && "bg-secondary",
                     )}
                     onClick={() => {
+                      if (conversation.profileId === selectedConversation?.profileId) {
+                        if (window.innerWidth < 768) {
+                          setShowConversations(false)
+                        }
+                        return
+                      }
                       void loadConversation(conversation.profileId)
-                      setShowConversations(false)
+                      if (window.innerWidth < 768) {
+                        setShowConversations(false)
+                      }
                     }}
                   >
                     <div className="relative">
