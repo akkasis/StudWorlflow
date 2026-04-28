@@ -23,7 +23,7 @@ export function ThemeToggle() {
     >
       <span
         className={cn(
-          "pointer-events-none absolute inset-y-1.5 left-1.5 z-0 w-8 rounded-full transition-transform duration-300",
+          "pointer-events-none absolute inset-y-1.5 left-1.5 z-0 w-8 rounded-full transition-transform duration-500 ease-in-out",
           isDark
             ? "translate-x-9 bg-[radial-gradient(circle_at_35%_35%,rgba(198,220,255,0.98),rgba(118,142,189,0.92))] shadow-[0_0_22px_rgba(120,160,255,0.42)]"
             : "translate-x-0 bg-[radial-gradient(circle_at_35%_35%,rgba(255,248,214,1),rgba(255,195,87,0.95))] shadow-[0_0_22px_rgba(255,194,82,0.38)]",
@@ -50,21 +50,15 @@ export function ThemeToggle() {
 
       <span
         className={cn(
-          "pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center justify-center transition-transform duration-300",
+          "pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center justify-center transition-transform duration-500 ease-in-out",
           isDark ? "translate-x-9" : "translate-x-0",
         )}
       >
         <span className="relative flex h-8 w-8 items-center justify-center rounded-full">
-          <span
-            className={cn(
-              "absolute inset-0 rounded-full opacity-80 transition-all duration-300",
-              isDark ? "bg-sky-200/18" : "bg-white/20",
-            )}
-          />
           {isDark ? (
-            <Moon className="relative h-4 w-4 text-slate-900" />
+            <Moon className="h-4 w-4 text-slate-900" />
           ) : (
-            <Sun className="relative h-4 w-4 text-amber-950" />
+            <Sun className="h-4 w-4 text-amber-950" />
           )}
         </span>
       </span>
