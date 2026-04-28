@@ -16,15 +16,19 @@ import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
 import { StudentCard, StudentData } from "@/components/student-card"
 import { apiUrl } from "@/lib/api"
+import { useAuth } from "@/context/auth-context"
 
 const SORT_OPTIONS = [
   { value: "popular", label: "По популярности" },
   { value: "newest", label: "Сначала новые" },
   { value: "price", label: "По цене" },
+  { value: "favorites", label: "Только избранные" },
 ]
 
 export default function MarketplacePage() {
+  const { user } = useAuth()
   const [students, setStudents] = useState<StudentData[]>([])
+  const [favoriteTutorIds, setFavoriteTutorIds] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [sortBy, setSortBy] = useState("popular")
   const [searchQuery, setSearchQuery] = useState("")
@@ -38,7 +42,9 @@ export default function MarketplacePage() {
   useEffect(() => {
     setLoading(true)
 
-    fetch(apiUrl(`/profiles?sort=${sortBy}`))
+    const backendSort = sortBy === "favorites" ? "popular" : sortBy
+
+    fetch(apiUrl(`/profiles?sort=${backendSort}`))
       .then((res) => res.json())
       .then((data) => {
         setStudents(data)
@@ -47,8 +53,36 @@ export default function MarketplacePage() {
       .catch(() => setLoading(false))
   }, [sortBy])
 
+  useEffect(() => {
+    if (user?.role !== "student") {
+      setFavoriteTutorIds([])
+      return
+    }
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      setFavoriteTutorIds([])
+      return
+    }
+
+    fetch(apiUrl("/profiles/favorites"), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setFavoriteTutorIds(Array.isArray(data) ? data : [])
+      })
+      .catch(() => setFavoriteTutorIds([]))
+  }, [user])
+
   const filteredStudents = useMemo(() => {
     return students.filter((student) => {
+      if (sortBy === "favorites" && !favoriteTutorIds.includes(student.id)) {
+        return false
+      }
+
       if (!searchQuery) return true
 
       const query = searchQuery.toLowerCase()
@@ -58,7 +92,7 @@ export default function MarketplacePage() {
         student.description.toLowerCase().includes(query)
       )
     })
-  }, [students, searchQuery])
+  }, [students, searchQuery, sortBy, favoriteTutorIds])
 
   const dismissTips = () => {
     localStorage.setItem("marketplace_help_dismissed", "1")
@@ -75,7 +109,7 @@ export default function MarketplacePage() {
             <div>
               <h1 className="text-3xl font-bold mb-2">Каталог тьюторов</h1>
               <p className="text-muted-foreground">
-                Выбирай студентов РАНХиГС по рейтингу, цене и свежести анкет.
+                Выбирай тьюторов РАНХиГС по рейтингу, цене и своим сохранениям.
               </p>
             </div>
 
@@ -138,11 +172,13 @@ export default function MarketplacePage() {
 
           {loading && <p className="mt-6">Загрузка...</p>}
 
-          {!loading && filteredStudents.length === 0 && (
+              {!loading && filteredStudents.length === 0 && (
             <div className="mt-8 rounded-3xl border border-border bg-card p-8 text-center">
               <p className="text-lg font-semibold">Ничего не найдено</p>
               <p className="mt-2 text-muted-foreground">
-                Попробуй изменить запрос или переключить сортировку.
+                {sortBy === "favorites"
+                  ? "Пока нет сохраненных тьюторов. Открой анкету и нажми на сердечко."
+                  : "Попробуй изменить запрос или переключить сортировку."}
               </p>
             </div>
           )}

@@ -1,9 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { MessageSquare, Settings, ShieldCheck } from "lucide-react"
+import { Heart, MessageSquare, Settings, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAuth } from "@/context/auth-context"
 import { apiUrl } from "@/lib/api"
@@ -25,6 +25,33 @@ export function ProfileActions({
   const { showAlert } = useAppAlert()
   const isOwnProfile = user?.id === ownerUserId
   const [sendingInterest, setSendingInterest] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const canFavorite = role === "tutor" && user?.role === "student" && !isOwnProfile
+
+  useEffect(() => {
+    if (!canFavorite) {
+      setIsFavorite(false)
+      return
+    }
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      setIsFavorite(false)
+      return
+    }
+
+    fetch(apiUrl("/profiles/favorites"), {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        setIsFavorite(Array.isArray(data) && data.includes(profileId))
+      })
+      .catch(() => setIsFavorite(false))
+  }, [canFavorite, profileId])
 
   if (isOwnProfile) {
     return (
@@ -98,8 +125,58 @@ export function ProfileActions({
     }
   }
 
+  const handleFavoriteToggle = async () => {
+    if (!user) {
+      router.push("/login")
+      return
+    }
+
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
+    setFavoriteLoading(true)
+
+    try {
+      const res = await fetch(apiUrl(`/profiles/${profileId}/favorite`), {
+        method: isFavorite ? "DELETE" : "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        showAlert("Не удалось обновить избранное", data?.message || "Попробуй еще раз.")
+        return
+      }
+
+      setIsFavorite((current) => !current)
+    } catch (error) {
+      console.error(error)
+      showAlert("Ошибка сервера", "Сейчас не удалось обновить избранное.")
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
+      {canFavorite ? (
+        <Button
+          variant={isFavorite ? "default" : "outline"}
+          size="lg"
+          className="w-full"
+          onClick={handleFavoriteToggle}
+          disabled={favoriteLoading}
+        >
+          <Heart className={`mr-2 h-4 w-4 ${isFavorite ? "fill-current" : ""}`} />
+          {isFavorite ? "В избранном" : "Сохранить тьютора"}
+        </Button>
+      ) : null}
       <Button size="lg" className="w-full" onClick={handleInterest} disabled={sendingInterest}>
         <MessageSquare className="h-4 w-4 mr-2" />
         {role === "tutor" && user?.role === "student" ? "Откликнуться" : "Написать"}

@@ -20,12 +20,14 @@ import { Badge } from "@/components/ui/badge"
 import { Search, ExternalLink, LifeBuoy, MessagesSquare } from "lucide-react"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface AdminUser {
   id: string
   email: string
   role: "student" | "tutor" | "moderator" | "admin"
   tutorVerified: boolean
+  isOnline?: boolean
   ban: { permanent?: boolean; until?: string; reason?: string } | null
   profile: {
     id: string
@@ -34,6 +36,7 @@ interface AdminUser {
     course: number
     role: string
     rating: number
+    avatar?: string | null
     description?: string
     pricePerHour?: number
   } | null
@@ -58,6 +61,7 @@ interface UserContext {
     role: "student" | "tutor" | "moderator" | "admin"
     createdAt: string
     tutorVerified: boolean
+    isOnline?: boolean
     ban: { permanent?: boolean; until?: string; reason?: string } | null
   }
   profile: {
@@ -71,6 +75,7 @@ interface UserContext {
     pricePerHour: number
     avatar?: string | null
     banner?: string | null
+    isOnline?: boolean
     availability?: {
       formats: string[]
       primeDays: string[]
@@ -368,13 +373,25 @@ export default function AdminPage() {
                               : "border-border bg-card hover:bg-secondary/70"
                           }`}
                         >
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold">{item.profile?.name || item.email}</p>
-                            <Badge>{item.role}</Badge>
-                            {item.tutorVerified ? <Badge variant="outline">Верифицирован</Badge> : null}
-                            {item.ban ? <Badge variant="destructive">Ограничен</Badge> : null}
+                          <div className="flex items-start gap-3">
+                            <UserAvatar
+                              src={item.profile?.avatar}
+                              name={item.profile?.name || item.email}
+                              isOnline={item.isOnline}
+                              className="h-11 w-11"
+                              fallbackClassName="bg-primary/15 text-primary"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="font-semibold">{item.profile?.name || item.email}</p>
+                                <Badge>{item.role}</Badge>
+                                {item.tutorVerified ? <Badge variant="outline">Верифицирован</Badge> : null}
+                                {item.ban ? <Badge variant="destructive">Ограничен</Badge> : null}
+                                {item.isOnline ? <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">В сети</Badge> : null}
+                              </div>
+                              <p className="mt-2 text-sm text-muted-foreground">{item.email}</p>
+                            </div>
                           </div>
-                          <p className="mt-2 text-sm text-muted-foreground">{item.email}</p>
                         </button>
                       ))
                     )}
@@ -388,16 +405,29 @@ export default function AdminPage() {
                     ) : (
                       <div className="space-y-6">
                         <div className="rounded-3xl border border-border bg-card p-5 space-y-4">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-xl font-semibold">
-                              {selectedUser.profile?.name || selectedUser.email}
-                            </h3>
-                            <Badge>{selectedUser.role}</Badge>
-                            {selectedUser.tutorVerified ? <Badge variant="outline">Верифицирован</Badge> : null}
-                            {selectedUser.ban ? <Badge variant="destructive">Ограничен</Badge> : null}
-                          </div>
+                          <div className="flex items-start gap-4">
+                            <UserAvatar
+                              src={userContext?.profile?.avatar || selectedUser.profile?.avatar}
+                              name={selectedUser.profile?.name || selectedUser.email}
+                              isOnline={selectedUser.isOnline}
+                              className="h-16 w-16"
+                              fallbackClassName="bg-primary/15 text-primary text-lg"
+                              indicatorClassName="h-4.5 w-4.5"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-xl font-semibold">
+                                  {selectedUser.profile?.name || selectedUser.email}
+                                </h3>
+                                <Badge>{selectedUser.role}</Badge>
+                                {selectedUser.tutorVerified ? <Badge variant="outline">Верифицирован</Badge> : null}
+                                {selectedUser.ban ? <Badge variant="destructive">Ограничен</Badge> : null}
+                                {selectedUser.isOnline ? <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">В сети</Badge> : null}
+                              </div>
 
-                          <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
+                              <p className="mt-2 text-sm text-muted-foreground">{selectedUser.email}</p>
+                            </div>
+                          </div>
 
                           <div className="flex flex-wrap gap-2">
                             {selectedUser.profile ? (

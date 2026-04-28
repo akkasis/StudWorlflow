@@ -7,6 +7,8 @@ import { randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
+const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+
 interface ConversationRow {
   id: string;
   participantOneProfileId: number;
@@ -74,6 +76,9 @@ export class MessagesService {
       },
     });
 
+    const onlineUserIds = await this.getOnlineUserIds(
+      profiles.map((profile) => profile.userId),
+    );
     const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
     const messageRows = conversations.length
       ? await this.prisma.$queryRaw<MessageRow[]>`
@@ -126,8 +131,9 @@ export class MessagesService {
         avatar: partnerProfile.avatarUrl,
         role: partnerProfile.user.role === 'tutor' ? 'tutor' : partnerProfile.role,
         university: partnerProfile.university,
+        isOnline: onlineUserIds.has(partnerProfile.userId),
         lastMessage: lastMessage?.text || '',
-        timestamp: lastMessage?.createdAt || conversation.updatedAt,
+          timestamp: lastMessage?.createdAt || conversation.updatedAt,
         lastSenderUserId: lastMessage?.senderUserId || null,
         unreadCount,
       };
@@ -220,6 +226,7 @@ export class MessagesService {
           ORDER BY "createdAt" ASC
         `
       : [];
+    const isOnline = await this.isUserIdOnline(targetProfile.userId);
 
     return {
       conversationId: conversation?.id || null,
@@ -229,6 +236,7 @@ export class MessagesService {
         avatar: targetProfile.avatarUrl,
         role: targetProfile.user.role === 'tutor' ? 'tutor' : targetProfile.role,
         university: targetProfile.university,
+        isOnline,
       },
       messages: freshMessages.map((message) => ({
         id: message.id,
@@ -395,5 +403,28 @@ export class MessagesService {
     return firstProfileId < secondProfileId
       ? [firstProfileId, secondProfileId] as const
       : [secondProfileId, firstProfileId] as const;
+  }
+
+  private async getOnlineUserIds(userIds: number[]) {
+    if (userIds.length === 0) {
+      return new Set<number>();
+    }
+
+    const threshold = new Date(Date.now() - ONLINE_WINDOW_MS);
+    const rows = await this.prisma.$queryRaw<Array<{ id: number }>>`
+      SELECT "id"
+      FROM "User"
+      WHERE
+        "id" IN (${Prisma.join(userIds)})
+        AND "lastSeenAt" IS NOT NULL
+        AND "lastSeenAt" >= ${threshold}
+    `;
+
+    return new Set(rows.map((row) => row.id));
+  }
+
+  private async isUserIdOnline(userId: number) {
+    const onlineIds = await this.getOnlineUserIds([userId]);
+    return onlineIds.has(userId);
   }
 }

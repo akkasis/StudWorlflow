@@ -1,8 +1,11 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { ModerationService, UserRole } from '../moderation/moderation.service';
 import { ProfileMetaService } from '../profiles/profile-meta.service';
 import { ROOT_ADMIN_EMAIL } from '../auth/auth.constants';
+
+const ONLINE_WINDOW_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class AdminService {
@@ -31,6 +34,7 @@ export class AdminService {
         createdAt: 'desc',
       },
     });
+    const onlineUserIds = await this.getOnlineUserIds(users.map((user) => user.id));
 
     return Promise.all(
       users.map(async (user) => {
@@ -39,6 +43,7 @@ export class AdminService {
           id: String(user.id),
           email: user.email,
           role: user.role,
+          isOnline: onlineUserIds.has(user.id),
           profile: user.profile
             ? {
                 id: String(user.profile.id),
@@ -49,6 +54,7 @@ export class AdminService {
                 rating: user.profile.rating,
                 description: user.profile.description,
                 pricePerHour: user.profile.priceFrom,
+                avatar: user.profile.avatarUrl,
               }
             : null,
           tutorVerified: moderation.tutorVerified || false,
@@ -72,6 +78,7 @@ export class AdminService {
     }
 
     const moderation = await this.moderationService.getUserState(userId);
+    const isOnline = await this.isUserIdOnline(user.id);
     const availability = user.profile
       ? await this.profileMetaService.getAvailability(user.profile.id)
       : null;
@@ -189,6 +196,7 @@ export class AdminService {
         email: user.email,
         role: user.role,
         createdAt: user.createdAt,
+        isOnline,
         tutorVerified: moderation.tutorVerified || false,
         ban: moderation.ban || null,
       },
@@ -205,6 +213,7 @@ export class AdminService {
             avatar: user.profile.avatarUrl,
             banner,
             availability,
+            isOnline,
           }
         : null,
       supportMessages: supportMessages.map((message) => ({
@@ -447,5 +456,28 @@ export class AdminService {
     });
 
     return { success: true };
+  }
+
+  private async getOnlineUserIds(userIds: number[]) {
+    if (userIds.length === 0) {
+      return new Set<number>();
+    }
+
+    const threshold = new Date(Date.now() - ONLINE_WINDOW_MS);
+    const rows = await this.prisma.$queryRaw<Array<{ id: number }>>`
+      SELECT "id"
+      FROM "User"
+      WHERE
+        "id" IN (${Prisma.join(userIds)})
+        AND "lastSeenAt" IS NOT NULL
+        AND "lastSeenAt" >= ${threshold}
+    `;
+
+    return new Set(rows.map((row) => row.id));
+  }
+
+  private async isUserIdOnline(userId: number) {
+    const onlineUserIds = await this.getOnlineUserIds([userId]);
+    return onlineUserIds.has(userId);
   }
 }

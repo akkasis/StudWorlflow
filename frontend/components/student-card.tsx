@@ -1,14 +1,14 @@
 import Link from "next/link"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { StarRating } from "@/components/star-rating"
 import { MapPin, Verified } from "lucide-react"
+import { UserAvatar } from "@/components/user-avatar"
 
 export interface StudentData {
   id: string
   name: string
   avatar?: string
+  isOnline?: boolean
   university: string
   course: string
   tags: string[]
@@ -24,12 +24,6 @@ interface StudentCardProps {
 }
 
 export function StudentCard({ student }: StudentCardProps) {
-  const initials = student.name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-
   return (
     <Link href={`/profile/${student.id}`} className="group block">
       <div
@@ -49,12 +43,14 @@ export function StudentCard({ student }: StudentCardProps) {
         {/* Top Section */}
         <div className="flex items-start gap-4">
           <div className="relative">
-            <Avatar className="h-14 w-14 ring-2 ring-border">
-              <AvatarImage src={student.avatar} alt={student.name} />
-              <AvatarFallback className="bg-primary/20 text-primary font-semibold text-lg">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              src={student.avatar}
+              name={student.name}
+              isOnline={student.isOnline}
+              className="h-14 w-14 ring-2 ring-border"
+              fallbackClassName="bg-primary/20 text-primary font-semibold text-lg"
+              indicatorClassName={student.verified ? "bottom-4 right-0" : ""}
+            />
             {student.verified && (
               <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                 <Verified className="h-3 w-3 text-primary-foreground" />
@@ -69,6 +65,9 @@ export function StudentCard({ student }: StudentCardProps) {
               <MapPin className="h-3.5 w-3.5" />
               <span className="truncate">{student.university}</span>
             </div>
+            {student.isOnline ? (
+              <p className="mt-1 text-xs font-medium text-emerald-500">Сейчас в сети</p>
+            ) : null}
           </div>
         </div>
 

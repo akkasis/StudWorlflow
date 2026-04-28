@@ -42,6 +42,12 @@ export class JwtAuthGuard {
         throw new UnauthorizedException('User not found');
       }
 
+      await this.prismaService.$executeRaw`
+        UPDATE "User"
+        SET "lastSeenAt" = ${new Date()}
+        WHERE "id" = ${user.id}
+      `;
+
       if (await this.moderationService.isUserBanned(payload.userId)) {
         throw new UnauthorizedException('Account is banned');
       }

@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Send, ArrowLeft, MoreVertical, MessageSquare } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -14,6 +13,7 @@ import { useAuth } from "@/context/auth-context"
 import { cn } from "@/lib/utils"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
+import { UserAvatar } from "@/components/user-avatar"
 
 interface ConversationSummary {
   id: string
@@ -22,6 +22,7 @@ interface ConversationSummary {
   avatar?: string | null
   role: string
   university: string
+  isOnline?: boolean
   lastMessage: string
   timestamp: string
   lastSenderUserId: number | null
@@ -43,6 +44,7 @@ interface ConversationResponse {
     avatar?: string | null
     role: string
     university: string
+    isOnline?: boolean
   }
   messages: ChatMessage[]
 }
@@ -148,6 +150,7 @@ function MessagesPageContent() {
         avatar: data.participant.avatar,
         role: data.participant.role,
         university: data.participant.university,
+        isOnline: data.participant.isOnline,
         lastMessage: data.messages[data.messages.length - 1]?.text || "",
         timestamp: data.messages[data.messages.length - 1]?.createdAt || new Date().toISOString(),
         lastSenderUserId: data.messages[data.messages.length - 1]?.senderUserId || null,
@@ -174,6 +177,7 @@ function MessagesPageContent() {
           avatar: data.participant.avatar,
           role: data.participant.role,
           university: data.participant.university,
+          isOnline: data.participant.isOnline,
           lastMessage: "",
           timestamp: new Date().toISOString(),
           lastSenderUserId: null,
@@ -323,10 +327,12 @@ function MessagesPageContent() {
                     }}
                   >
                     <div className="relative">
-                      <Avatar className="h-12 w-12">
-                        <AvatarImage src={conversation.avatar || undefined} alt={conversation.name} />
-                        <AvatarFallback>{conversation.name[0]}</AvatarFallback>
-                      </Avatar>
+                      <UserAvatar
+                        src={conversation.avatar}
+                        name={conversation.name}
+                        isOnline={conversation.isOnline}
+                        className="h-12 w-12"
+                      />
                       {conversation.unreadCount > 0 && (
                         <div className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 bg-primary rounded-full border-2 border-card text-[10px] text-primary-foreground flex items-center justify-center">
                           {conversation.unreadCount}
@@ -345,6 +351,9 @@ function MessagesPageContent() {
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
                         {conversation.role === "tutor" ? "Тьютор" : "Студент"} • {conversation.university}
                       </p>
+                      {conversation.isOnline ? (
+                        <p className="mt-1 text-[11px] font-medium text-emerald-500">Сейчас в сети</p>
+                      ) : null}
                       <p className="text-sm truncate mt-1 text-muted-foreground">
                         {conversation.lastMessage || "Начни разговор первым"}
                       </p>
@@ -393,10 +402,12 @@ function MessagesPageContent() {
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </Button>
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedConversation.avatar || undefined} alt={selectedConversation.name} />
-                    <AvatarFallback>{selectedConversation.name[0]}</AvatarFallback>
-                  </Avatar>
+                  <UserAvatar
+                    src={selectedConversation.avatar}
+                    name={selectedConversation.name}
+                    isOnline={selectedConversation.isOnline}
+                    className="h-10 w-10"
+                  />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-foreground truncate">
                       {selectedConversation.name}
@@ -404,6 +415,9 @@ function MessagesPageContent() {
                     <p className="text-xs text-muted-foreground">
                       {selectedConversationLabel}
                     </p>
+                    {selectedConversation.isOnline ? (
+                      <p className="text-[11px] font-medium text-emerald-500">В сети</p>
+                    ) : null}
                     <p className="text-[11px] text-muted-foreground">
                       Последняя активность: {formatConversationTime(selectedConversation.timestamp)}
                     </p>

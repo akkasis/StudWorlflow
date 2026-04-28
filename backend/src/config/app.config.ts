@@ -33,6 +33,15 @@ export const appConfig = {
   smtpUser: process.env.SMTP_USER || '',
   smtpPassword: process.env.SMTP_PASSWORD || '',
   smtpFrom: process.env.SMTP_FROM || 'no-reply@skillent.local',
+  s3Endpoint: (process.env.S3_ENDPOINT || '').trim().replace(/\/$/, ''),
+  s3Region: (process.env.S3_REGION || '').trim(),
+  s3Bucket: (process.env.S3_BUCKET || '').trim(),
+  s3AccessKeyId: (process.env.S3_ACCESS_KEY_ID || '').trim(),
+  s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+  s3PublicBaseUrl: (
+    process.env.S3_PUBLIC_BASE_URL ||
+    ''
+  ).trim().replace(/\/$/, ''),
   rootAdminEmail:
     process.env.ROOT_ADMIN_EMAIL || 'admin@skillent.local',
   rootAdminPassword:

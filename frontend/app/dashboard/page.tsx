@@ -185,46 +185,68 @@ export default function DashboardPage() {
     const file = event.target.files?.[0]
     if (!file || !profile) return
 
-    const reader = new FileReader()
-    setAvatarLoading(true)
-
-    reader.onload = () => {
-      setProfile({
-        ...profile,
-        avatar: String(reader.result),
-      })
-      setAvatarLoading(false)
-    }
-
-    reader.onerror = () => {
-      setAvatarLoading(false)
-      showAlert("Ошибка загрузки", "Не удалось загрузить изображение. Попробуй выбрать другой файл.")
-    }
-
-    reader.readAsDataURL(file)
+    void uploadProfileAsset(file, "avatar")
   }
 
   const handleBannerChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file || !profile || profile.role !== "tutor") return
 
-    const reader = new FileReader()
-    setBannerLoading(true)
+    void uploadProfileAsset(file, "banner")
+  }
 
-    reader.onload = () => {
-      setProfile({
-        ...profile,
-        banner: String(reader.result),
+  const uploadProfileAsset = async (file: File, kind: "avatar" | "banner") => {
+    const token = localStorage.getItem("token")
+    if (!token || !profile) return
+
+    if (kind === "avatar") {
+      setAvatarLoading(true)
+    } else {
+      setBannerLoading(true)
+    }
+
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+
+      const res = await fetch(apiUrl(`/profiles/upload/${kind}`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       })
-      setBannerLoading(false)
-    }
 
-    reader.onerror = () => {
-      setBannerLoading(false)
-      showAlert("Ошибка загрузки", "Не удалось загрузить баннер. Попробуй выбрать другой файл.")
-    }
+      const data = await res.json().catch(() => null)
 
-    reader.readAsDataURL(file)
+      if (!res.ok || !data?.url) {
+        showAlert(
+          "Ошибка загрузки",
+          data?.message || "Не удалось загрузить изображение. Попробуй выбрать другой файл.",
+        )
+        return
+      }
+
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              ...(kind === "avatar"
+                ? { avatar: data.url }
+                : { banner: data.url }),
+            }
+          : current,
+      )
+    } catch (error) {
+      console.error(error)
+      showAlert("Ошибка загрузки", "Сейчас не удалось загрузить файл. Попробуй еще раз.")
+    } finally {
+      if (kind === "avatar") {
+        setAvatarLoading(false)
+      } else {
+        setBannerLoading(false)
+      }
+    }
   }
 
   const handleSaveProfile = async () => {

@@ -3,9 +3,10 @@ import { ProfilesService } from './profiles.service';
 import { ProfilesController } from './profiles.controller';
 import { PrismaModule } from '../prisma/prisma.module';
 import { ProfileMetaService } from './profile-meta.service';
+import { StorageModule } from '../storage/storage.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, StorageModule],
   providers: [ProfilesService, ProfileMetaService],
   controllers: [ProfilesController],
   exports: [ProfilesService, ProfileMetaService],

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation"
 import { MapPin, Clock, CheckCircle } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -10,6 +9,7 @@ import { StarRating } from "@/components/star-rating"
 import { ProfileActions } from "@/components/profile-actions"
 import { AddReview } from "@/components/add-review"
 import { apiUrl } from "@/lib/api"
+import { UserAvatar } from "@/components/user-avatar"
 
 export const dynamic = "force-dynamic"
 
@@ -35,12 +35,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
     notFound()
   }
 
-  const initials = profile.name
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase()
-
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
@@ -59,10 +53,13 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
 
             <CardContent className="relative pt-0 pb-6 px-6">
               <div className="flex flex-col sm:flex-row gap-6 items-start">
-                <Avatar className="h-28 w-28 -mt-14 border-4 border-card shadow-md">
-                  <AvatarImage src={profile.avatar} />
-                  <AvatarFallback>{initials}</AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  src={profile.avatar}
+                  name={profile.name}
+                  isOnline={profile.isOnline}
+                  className="h-28 w-28 -mt-14 border-4 border-card shadow-md"
+                  indicatorClassName="h-5 w-5 border-[3px] border-card"
+                />
 
                 <div className="flex-1 pt-2">
                   <div className="flex flex-wrap items-center gap-3">
@@ -71,6 +68,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                       {profile.role === "tutor" ? "Тьютор РАНХиГС" : "Студент РАНХиГС"}
                     </Badge>
                     {profile.verified && <Badge variant="outline">Верифицированный пользователь</Badge>}
+                    {profile.isOnline ? <Badge className="bg-emerald-500 text-white hover:bg-emerald-500">В сети</Badge> : null}
                   </div>
 
                   <div className="flex items-center gap-2 text-muted-foreground mt-2">
