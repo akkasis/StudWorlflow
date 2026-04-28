@@ -150,3 +150,16 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+html.theme-animate,
+html.theme-animate *,
+html.theme-animate *::before,
+html.theme-animate *::after {
+  transition:
+    background-color 320ms ease,
+    border-color 320ms ease,
+    color 260ms ease,
+    box-shadow 320ms ease,
+    fill 260ms ease,
+    stroke 260ms ease !important;
+}

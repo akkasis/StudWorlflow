@@ -44,6 +44,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme])
 
   const setTheme = (nextTheme: Theme) => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.add('theme-animate')
+      window.setTimeout(() => {
+        document.documentElement.classList.remove('theme-animate')
+      }, 420)
+    }
     setThemeState(nextTheme)
   }
 
