@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { ArrowRight, BookOpenCheck, ClipboardCheck, GraduationCap, Search, WalletCards } from "lucide-react"
+import { BookOpenCheck, ClipboardCheck, GraduationCap, Search, UserRound, WalletCards } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
@@ -92,7 +92,7 @@ export default function HomePage() {
               </Link>
               <Link href="/signup">
                 <Button size="sm" className="rounded-xl px-3 glow-primary sm:px-4">
-                  Зарегаться
+                  Регистрация
                 </Button>
               </Link>
             </div>
@@ -138,19 +138,22 @@ export default function HomePage() {
 
             <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
               <Link href="/signup?role=tutor" className="w-full sm:w-auto">
-                <Button size="lg" className="h-14 w-full px-8 sm:w-auto">
-                  стать стутьютором
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                <Button size="lg" className="h-14 w-full px-8 sm:w-52">
+                  <GraduationCap className="mr-2 h-4 w-4" />
+                  Стать партнером
                 </Button>
               </Link>
               <Link href="/signup?role=student" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="h-14 w-full px-8 sm:w-auto">
-                  найти помощь
+                <Button size="lg" className="h-14 w-full px-8 sm:w-52">
+                  <UserRound className="mr-2 h-4 w-4" />
+                  Стать клиентом
                 </Button>
               </Link>
             </div>
           </section>
         </main>
+
+        <Footer />
       </div>
     )
   }
@@ -177,7 +180,7 @@ export default function HomePage() {
               </h1>
               
               <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
-                Общайся со студентами-стутьюторами, которые уже отлично прошли твои предметы.
+                Общайся со студентами, которые уже отлично прошли твои предметы.
               </p>
 
               <div className="mt-10 flex w-full max-w-4xl flex-col gap-3 mx-auto sm:flex-row sm:items-stretch">
@@ -190,9 +193,8 @@ export default function HomePage() {
                 </div>
 
                 <Link href="/marketplace" className="shrink-0">
-                  <Button size="lg" className="h-14 w-full px-8 sm:w-auto">
-                    Найти стутьютора
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button size="lg" className="h-14 w-full px-8 sm:w-14 sm:px-0" aria-label="Найти стутьютора">
+                    <Search className="h-5 w-5" />
                   </Button>
                 </Link>
               </div>
@@ -206,7 +208,7 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-4">
 
             <h2 className="text-3xl font-bold mb-10">
-              Популярные стутьюторы
+              Популярные анкеты
             </h2>
 
             {loading && <p>Загрузка...</p>}
