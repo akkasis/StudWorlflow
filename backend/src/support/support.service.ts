@@ -22,6 +22,7 @@ export interface SupportThreadSummary {
   name: string;
   lastMessage: string;
   updatedAt: string;
+  lastSenderUserId: number | null;
 }
 
 export interface SupportThreadResponse {
@@ -39,6 +40,7 @@ export class SupportService {
         userId: number;
         updatedAt: Date;
         lastMessage: string | null;
+        lastSenderUserId: number | null;
       }>
     >`
       SELECT
@@ -50,7 +52,14 @@ export class SupportService {
           WHERE sm."threadUserId" = st."userId"
           ORDER BY sm."createdAt" DESC
           LIMIT 1
-        ) AS "lastMessage"
+        ) AS "lastMessage",
+        (
+          SELECT sm."senderUserId"
+          FROM "SupportMessage" sm
+          WHERE sm."threadUserId" = st."userId"
+          ORDER BY sm."createdAt" DESC
+          LIMIT 1
+        ) AS "lastSenderUserId"
       FROM "SupportThread" st
       ORDER BY st."updatedAt" DESC
     `;
@@ -77,6 +86,7 @@ export class SupportService {
         name: user?.profile?.name || user?.email || 'Пользователь',
         lastMessage: thread.lastMessage || '',
         updatedAt: thread.updatedAt,
+        lastSenderUserId: thread.lastSenderUserId,
       };
     });
   }

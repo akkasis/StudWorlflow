@@ -40,4 +40,12 @@ export class MessagesController {
       body.text,
     );
   }
+
+  @Post(':profileId/interest')
+  expressInterest(@Req() req: any, @Param('profileId') profileId: string) {
+    return this.messagesService.expressInterest(
+      req.user.userId,
+      Number(profileId),
+    );
+  }
 }

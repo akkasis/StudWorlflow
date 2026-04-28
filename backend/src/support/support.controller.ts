@@ -41,6 +41,8 @@ export class SupportController {
         updatedAt:
           me.messages[me.messages.length - 1]?.createdAt ||
           new Date().toISOString(),
+        lastSenderUserId:
+          me.messages[me.messages.length - 1]?.senderUserId || null,
       },
     ];
   }

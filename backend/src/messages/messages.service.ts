@@ -128,6 +128,7 @@ export class MessagesService {
         university: partnerProfile.university,
         lastMessage: lastMessage?.text || '',
         timestamp: lastMessage?.createdAt || conversation.updatedAt,
+        lastSenderUserId: lastMessage?.senderUserId || null,
         unreadCount,
       };
     });
@@ -245,6 +246,82 @@ export class MessagesService {
       throw new BadRequestException('Message cannot be empty');
     }
 
+    const { myProfile, conversationId, isSenderParticipantOne } =
+      await this.prepareConversationContext(userId, profileId);
+
+    const [message] = await this.prisma.$queryRaw<MessageRow[]>`
+      INSERT INTO "Message" (
+        "id",
+        "conversationId",
+        "senderUserId",
+        "text",
+        "readByParticipantOne",
+        "readByParticipantTwo"
+      )
+      VALUES (
+        ${randomUUID()},
+        ${conversationId},
+        ${userId},
+        ${normalizedText},
+        ${isSenderParticipantOne},
+        ${!isSenderParticipantOne}
+      )
+      RETURNING
+        "id",
+        "conversationId",
+        "senderUserId",
+        "text",
+        "createdAt",
+        "readByParticipantOne",
+        "readByParticipantTwo"
+    `;
+
+    await this.prisma.$executeRaw`
+      UPDATE "Conversation"
+      SET "updatedAt" = ${message.createdAt}
+      WHERE "id" = ${conversationId}
+    `;
+
+    return {
+      id: message.id,
+      senderUserId: message.senderUserId,
+      text: message.text,
+      createdAt: message.createdAt,
+    };
+  }
+
+  async expressInterest(userId: number, profileId: number) {
+    const { conversationId, targetProfile } = await this.prepareConversationContext(
+      userId,
+      profileId,
+    );
+
+    const existingCountRows = await this.prisma.$queryRaw<
+      Array<{ count: bigint }>
+    >`
+      SELECT COUNT(*)::bigint AS "count"
+      FROM "Message"
+      WHERE "conversationId" = ${conversationId}
+    `;
+
+    const existingCount = Number(existingCountRows[0]?.count || 0);
+
+    if (existingCount === 0) {
+      await this.sendMessage(
+        userId,
+        profileId,
+        `Отклик на анкету ${targetProfile.name}: хочу обсудить занятие и детали сотрудничества.`,
+      );
+    }
+
+    return {
+      success: true,
+      conversationId,
+      created: existingCount === 0,
+    };
+  }
+
+  private async prepareConversationContext(userId: number, profileId: number) {
     const [myProfile, targetProfile] = await Promise.all([
       this.prisma.profile.findUnique({
         where: { userId },
@@ -306,44 +383,11 @@ export class MessagesService {
       DO NOTHING
     `;
 
-    const [message] = await this.prisma.$queryRaw<MessageRow[]>`
-      INSERT INTO "Message" (
-        "id",
-        "conversationId",
-        "senderUserId",
-        "text",
-        "readByParticipantOne",
-        "readByParticipantTwo"
-      )
-      VALUES (
-        ${randomUUID()},
-        ${conversationId},
-        ${userId},
-        ${normalizedText},
-        ${isSenderParticipantOne},
-        ${!isSenderParticipantOne}
-      )
-      RETURNING
-        "id",
-        "conversationId",
-        "senderUserId",
-        "text",
-        "createdAt",
-        "readByParticipantOne",
-        "readByParticipantTwo"
-    `;
-
-    await this.prisma.$executeRaw`
-      UPDATE "Conversation"
-      SET "updatedAt" = ${message.createdAt}
-      WHERE "id" = ${conversationId}
-    `;
-
     return {
-      id: message.id,
-      senderUserId: message.senderUserId,
-      text: message.text,
-      createdAt: message.createdAt,
+      myProfile,
+      targetProfile,
+      conversationId,
+      isSenderParticipantOne,
     };
   }
 

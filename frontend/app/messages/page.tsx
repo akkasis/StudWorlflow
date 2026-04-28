@@ -24,6 +24,7 @@ interface ConversationSummary {
   university: string
   lastMessage: string
   timestamp: string
+  lastSenderUserId: number | null
   unreadCount: number
 }
 
@@ -63,6 +64,24 @@ function MessagesPageContent() {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
 
+  const formatConversationTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    const now = new Date()
+    const isToday = date.toDateString() === now.toDateString()
+
+    if (isToday) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    }
+
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+    })
+  }
+
   const loadConversations = useCallback(async () => {
     if (!token) return []
 
@@ -78,8 +97,26 @@ function MessagesPageContent() {
 
     const data = await res.json()
     setConversations(data)
+    if (selectedConversation) {
+      const freshSelected = data.find(
+        (conversation: ConversationSummary) =>
+          conversation.profileId === selectedConversation.profileId,
+      )
+
+      if (freshSelected) {
+        setSelectedConversation((current) =>
+          current
+            ? {
+                ...current,
+                ...freshSelected,
+                unreadCount: 0,
+              }
+            : current,
+        )
+      }
+    }
     return data as ConversationSummary[]
-  }, [token])
+  }, [selectedConversation, token])
 
   const loadConversation = useCallback(async (profileId: string) => {
     if (!token) return null
@@ -113,6 +150,7 @@ function MessagesPageContent() {
         university: data.participant.university,
         lastMessage: data.messages[data.messages.length - 1]?.text || "",
         timestamp: data.messages[data.messages.length - 1]?.createdAt || new Date().toISOString(),
+        lastSenderUserId: data.messages[data.messages.length - 1]?.senderUserId || null,
         unreadCount: 0,
       }
     })
@@ -138,6 +176,7 @@ function MessagesPageContent() {
           university: data.participant.university,
           lastMessage: "",
           timestamp: new Date().toISOString(),
+          lastSenderUserId: null,
           unreadCount: 0,
         },
         ...current,
@@ -300,10 +339,7 @@ function MessagesPageContent() {
                           {conversation.name}
                         </p>
                         <span className="text-xs text-muted-foreground shrink-0">
-                          {new Date(conversation.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {formatConversationTime(conversation.timestamp)}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
@@ -312,6 +348,16 @@ function MessagesPageContent() {
                       <p className="text-sm truncate mt-1 text-muted-foreground">
                         {conversation.lastMessage || "Начни разговор первым"}
                       </p>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p className="text-[11px] text-muted-foreground">
+                          Последняя активность: {formatConversationTime(conversation.timestamp)}
+                        </p>
+                        {conversation.unreadCount > 0 ? (
+                          <span className="text-[11px] font-medium text-primary">
+                            {conversation.unreadCount} непрочит.
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   </button>
                 ))}
@@ -358,6 +404,9 @@ function MessagesPageContent() {
                     <p className="text-xs text-muted-foreground">
                       {selectedConversationLabel}
                     </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      Последняя активность: {formatConversationTime(selectedConversation.timestamp)}
+                    </p>
                   </div>
                   <Link href={`/profile/${selectedConversation.profileId}`}>
                     <Button variant="ghost" size="icon">
@@ -392,6 +441,18 @@ function MessagesPageContent() {
                               : "bg-card border border-border rounded-bl-md",
                           )}
                         >
+                          {message.text.startsWith("Отклик на анкету") ? (
+                            <div
+                              className={cn(
+                                "mb-2 inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium",
+                                message.senderUserId === Number(user?.id)
+                                  ? "bg-primary-foreground/15 text-primary-foreground"
+                                  : "bg-primary/10 text-primary",
+                              )}
+                            >
+                              Отклик
+                            </div>
+                          ) : null}
                           <p className="text-sm leading-relaxed">{message.text}</p>
                           <p
                             className={cn(

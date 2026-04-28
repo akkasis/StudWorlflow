@@ -6,6 +6,8 @@ import './globals.css'
 import { AuthProvider } from '@/context/auth-context' // 👈 добавили
 import { ThemeProvider } from '@/components/theme-provider'
 import { AppAlertProvider } from '@/components/app-alert-provider'
+import { Toaster } from '@/components/ui/toaster'
+import { SiteNotifications } from '@/components/site-notifications'
 
 const _inter = Inter({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
@@ -44,7 +46,9 @@ export default function RootLayout({
         <ThemeProvider>
           <AppAlertProvider>
             <AuthProvider>
+              <SiteNotifications />
               {children}
+              <Toaster />
             </AuthProvider>
           </AppAlertProvider>
         </ThemeProvider>
