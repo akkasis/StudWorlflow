@@ -65,7 +65,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                   <div className="flex flex-wrap items-center gap-3">
                     <h1 className="text-3xl font-bold tracking-tight">{profile.name}</h1>
                     <Badge variant="secondary">
-                      {profile.role === "tutor" ? "Тьютор РАНХиГС" : "Студент РАНХиГС"}
+                      {profile.role === "tutor" ? "Тьютор" : "Студент"}
                     </Badge>
                     {profile.verified ? (
                       <Badge variant="outline">Верифицированный пользователь</Badge>
