@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useRef, useState } from "react"
+import { Suspense, useCallback, useEffect, useRef, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Send, LifeBuoy } from "lucide-react"
 import { Header } from "@/components/header"
@@ -28,7 +28,7 @@ interface SupportMessage {
   createdAt: string
 }
 
-export default function SupportPage() {
+function SupportPageContent() {
   const { user } = useAuth()
   const searchParams = useSearchParams()
   const requestedThreadId = searchParams.get("threadId")
@@ -249,5 +249,24 @@ export default function SupportPage() {
         </div>
       </div>
     </Protected>
+  )
+}
+
+export default function SupportPage() {
+  return (
+    <Suspense
+      fallback={
+        <Protected>
+          <div className="h-[100dvh] overflow-hidden bg-background">
+            <Header />
+            <div className="mt-16 flex h-[calc(100dvh-4rem)] items-center justify-center text-muted-foreground">
+              Загрузка поддержки...
+            </div>
+          </div>
+        </Protected>
+      }
+    >
+      <SupportPageContent />
+    </Suspense>
   )
 }
