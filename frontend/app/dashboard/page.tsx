@@ -51,6 +51,7 @@ interface ProfileData {
   reviewCount: number
   description: string
   pricePerHour: number
+  averageGrade?: number | null
   recentReviews: RecentReview[]
   verified?: boolean
   availability?: {
@@ -270,6 +271,7 @@ export default function DashboardPage() {
         payload.description = profile.description
         payload.tags = profile.tags
         payload.pricePerHour = profile.pricePerHour
+        payload.averageGrade = profile.averageGrade ?? null
         payload.banner = profile.banner
       }
 
@@ -723,6 +725,46 @@ export default function DashboardPage() {
                                 }
                                 className="mt-2 rounded-xl"
                               />
+                            </Field>
+                          </div>
+
+                          <div className="rounded-2xl border border-border/70 bg-card/70 p-4 md:col-span-2">
+                            <Field>
+                              <FieldLabel>Средний балл успеваемости</FieldLabel>
+                              <Input
+                                type="text"
+                                inputMode="decimal"
+                                placeholder="Например: 4.85"
+                                value={
+                                  profile.averageGrade !== null && profile.averageGrade !== undefined
+                                    ? String(profile.averageGrade)
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  const normalizedValue = e.target.value.replace(',', '.')
+
+                                  if (normalizedValue === "") {
+                                    setProfile({
+                                      ...profile,
+                                      averageGrade: null,
+                                    })
+                                    return
+                                  }
+
+                                  if (!/^\d*\.?\d*$/.test(normalizedValue)) {
+                                    return
+                                  }
+
+                                  setProfile({
+                                    ...profile,
+                                    averageGrade: Number(normalizedValue),
+                                  })
+                                }}
+                                className="mt-2 rounded-xl"
+                              />
+                              <p className="mt-2 text-sm text-muted-foreground">
+                                Поле необязательное. Если оставить пустым, в анкете оно не будет показываться.
+                              </p>
                             </Field>
                           </div>
 

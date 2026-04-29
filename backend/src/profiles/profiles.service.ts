@@ -37,6 +37,10 @@ export class ProfilesService {
         course: Number(data.course || 1),
         description: role === 'tutor' ? data.description || '' : '',
         priceFrom: role === 'tutor' ? Number(data.pricePerHour || 0) : 0,
+        averageGrade:
+          role === 'tutor'
+            ? this.normalizeAverageGrade(data.averageGrade)
+            : null,
 
         profileTags: {
           create: tags.map((tag: string) => ({
@@ -83,6 +87,10 @@ export class ProfilesService {
         priceFrom:
           isTutor && data.pricePerHour !== undefined
             ? Number(data.pricePerHour)
+            : undefined,
+        averageGrade:
+          isTutor && data.averageGrade !== undefined
+            ? this.normalizeAverageGrade(data.averageGrade)
             : undefined,
 
         profileTags: isTutor && data.tags
@@ -207,6 +215,7 @@ export class ProfilesService {
           reviewCount: p.reviews.length,
           description: p.description,
           pricePerHour: p.priceFrom,
+          averageGrade: p.averageGrade,
           role: normalizedRole,
           verified: moderation.tutorVerified || false,
           isOnline: onlineUserIds.has(p.userId),
@@ -308,6 +317,7 @@ export class ProfilesService {
       reviewCount: profile.reviews.length,
       description: profile.description,
       pricePerHour: profile.priceFrom,
+      averageGrade: profile.averageGrade,
       verified: moderation.tutorVerified || false,
       isOnline,
       banner,
@@ -403,6 +413,7 @@ export class ProfilesService {
       reviewCount: profile.reviews.length,
       description: profile.description,
       pricePerHour: profile.priceFrom,
+      averageGrade: profile.averageGrade,
       verified: moderation.tutorVerified || false,
       isOnline,
       banner,
@@ -518,5 +529,24 @@ export class ProfilesService {
   private async isUserIdOnline(userId: number) {
     const onlineIds = await this.getOnlineUserIds([userId]);
     return onlineIds.has(userId);
+  }
+
+  private normalizeAverageGrade(value: unknown) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const normalizedValue = String(value).trim().replace(',', '.');
+    const parsedValue = Number(normalizedValue);
+
+    if (Number.isNaN(parsedValue)) {
+      throw new BadRequestException('Средний балл должен быть числом');
+    }
+
+    if (parsedValue < 0 || parsedValue > 5) {
+      throw new BadRequestException('Средний балл должен быть в диапазоне от 0 до 5');
+    }
+
+    return Math.round(parsedValue * 100) / 100;
   }
 }

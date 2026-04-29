@@ -59,6 +59,7 @@ export class AuthService implements OnModuleInit {
       description,
       tags,
       pricePerHour,
+      averageGrade,
     } = data;
 
     const normalizedEmail = String(email || '').trim().toLowerCase();
@@ -107,6 +108,10 @@ export class AuthService implements OnModuleInit {
             normalizedRole === 'tutor'
               ? Number(profile?.pricePerHour || pricePerHour || 0)
               : 0,
+          averageGrade:
+            normalizedRole === 'tutor'
+              ? this.normalizeAverageGrade(profile?.averageGrade ?? averageGrade)
+              : null,
           profileTags:
             normalizedRole === 'tutor'
               ? {
@@ -176,6 +181,25 @@ export class AuthService implements OnModuleInit {
     return {
       access_token: token,
     };
+  }
+
+  private normalizeAverageGrade(value: unknown) {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const normalizedValue = String(value).trim().replace(',', '.');
+    const parsedValue = Number(normalizedValue);
+
+    if (Number.isNaN(parsedValue)) {
+      throw new BadRequestException('Средний балл должен быть числом');
+    }
+
+    if (parsedValue < 0 || parsedValue > 5) {
+      throw new BadRequestException('Средний балл должен быть в диапазоне от 0 до 5');
+    }
+
+    return Math.round(parsedValue * 100) / 100;
   }
 
   async getMe(userId: number) {

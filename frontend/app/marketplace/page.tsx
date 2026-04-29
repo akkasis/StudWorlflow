@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { Search, ArrowUpDown, CircleHelp, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ const SORT_OPTIONS = [
 ]
 
 export default function MarketplacePage() {
+  const searchParams = useSearchParams()
   const { user } = useAuth()
   const [students, setStudents] = useState<StudentData[]>([])
   const [favoriteTutorIds, setFavoriteTutorIds] = useState<string[]>([])
@@ -33,6 +35,10 @@ export default function MarketplacePage() {
   const [sortBy, setSortBy] = useState("popular")
   const [searchQuery, setSearchQuery] = useState("")
   const [showTips, setShowTips] = useState(false)
+
+  useEffect(() => {
+    setSearchQuery(searchParams.get("q") || "")
+  }, [searchParams])
 
   useEffect(() => {
     const dismissed = localStorage.getItem("marketplace_help_dismissed")

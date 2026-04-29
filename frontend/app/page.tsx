@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { FormEvent, useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { BookOpenCheck, ClipboardCheck, GraduationCap, Search, UserRound, WalletCards } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,9 +34,11 @@ const landingFeatures = [
 ]
 
 export default function HomePage() {
+  const router = useRouter()
   const { user, loading: authLoading } = useAuth()
   const [students, setStudents] = useState<StudentData[]>([])
   const [loading, setLoading] = useState(true)
+  const [heroQuery, setHeroQuery] = useState("")
 
   useEffect(() => {
     if (authLoading) {
@@ -58,6 +61,13 @@ export default function HomePage() {
   }, [authLoading, user])
 
   const featuredStudents = students.slice(0, 6)
+
+  const handleHeroSearch = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const query = heroQuery.trim()
+    const target = query ? `/marketplace?q=${encodeURIComponent(query)}` : "/marketplace"
+    router.push(target)
+  }
 
   if (authLoading) {
     return (
@@ -176,21 +186,26 @@ export default function HomePage() {
                 Общайся со студентами, которые уже отлично прошли твои предметы.
               </p>
 
-              <div className="mt-10 flex w-full max-w-4xl flex-col gap-3 mx-auto sm:flex-row sm:items-stretch">
+              <form
+                onSubmit={handleHeroSearch}
+                className="mt-10 flex w-full max-w-4xl flex-col gap-3 mx-auto sm:flex-row sm:items-stretch"
+              >
                 <div className="relative min-w-0 flex-1">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     placeholder="С чем нужна помощь?"
+                    value={heroQuery}
+                    onChange={(event) => setHeroQuery(event.target.value)}
                     className="h-14 border-2 border-primary/35 bg-card/95 pl-12 text-base shadow-md shadow-primary/10 hover:border-primary/60 focus-visible:border-primary dark:border-border dark:bg-card/70 dark:shadow-none"
                   />
                 </div>
 
-                <Link href="/marketplace" className="shrink-0">
-                  <Button size="lg" className="h-14 w-full px-8 sm:w-14 sm:px-0" aria-label="Найти стутьютора">
+                <div className="shrink-0">
+                  <Button type="submit" size="lg" className="h-14 w-full px-8 sm:w-14 sm:px-0" aria-label="Найти стутьютора">
                     <Search className="h-5 w-5" />
                   </Button>
-                </Link>
-              </div>
+                </div>
+              </form>
 
             </div>
           </div>
