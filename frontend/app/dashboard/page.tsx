@@ -81,6 +81,7 @@ export default function DashboardPage() {
   const { showAlert } = useAppAlert()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([])
+  const [averageGradeInput, setAverageGradeInput] = useState("")
   const [newTag, setNewTag] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [avatarLoading, setAvatarLoading] = useState(false)
@@ -108,6 +109,11 @@ export default function DashboardPage() {
     ])
       .then(([profileData, conversationsData]) => {
         setProfile(profileData)
+        setAverageGradeInput(
+          profileData.averageGrade !== null && profileData.averageGrade !== undefined
+            ? String(profileData.averageGrade)
+            : "",
+        )
         setRecentConversations(conversationsData.slice(0, 4))
       })
       .catch((error) => {
@@ -292,6 +298,11 @@ export default function DashboardPage() {
       }
 
       setProfile(data)
+      setAverageGradeInput(
+        data.averageGrade !== null && data.averageGrade !== undefined
+          ? String(data.averageGrade)
+          : "",
+      )
       showAlert("Готово", "Изменения в профиле успешно сохранены.")
     } catch (error) {
       console.error(error)
@@ -735,23 +746,21 @@ export default function DashboardPage() {
                                 type="text"
                                 inputMode="decimal"
                                 placeholder="Например: 4.85"
-                                value={
-                                  profile.averageGrade !== null && profile.averageGrade !== undefined
-                                    ? String(profile.averageGrade)
-                                    : ""
-                                }
+                                value={averageGradeInput}
                                 onChange={(e) => {
                                   const normalizedValue = e.target.value.replace(',', '.')
+
+                                  if (!/^\d*(?:[.,]\d*)?$/.test(e.target.value)) {
+                                    return
+                                  }
+
+                                  setAverageGradeInput(e.target.value)
 
                                   if (normalizedValue === "") {
                                     setProfile({
                                       ...profile,
                                       averageGrade: null,
                                     })
-                                    return
-                                  }
-
-                                  if (!/^\d*\.?\d*$/.test(normalizedValue)) {
                                     return
                                   }
 
