@@ -183,13 +183,13 @@
 .education-bg__columns {
   position: absolute;
   top: -22%;
-  left: -8%;
+  left: 50%;
   display: grid;
-  width: 116%;
+  width: min(118rem, 132vw);
   height: 144%;
   grid-template-columns: repeat(6, minmax(96px, 1fr));
   gap: clamp(1.5rem, 5vw, 5rem);
-  transform: rotate(-12deg);
+  transform: translateX(-50%) rotate(-12deg);
   transform-origin: center;
   will-change: transform;
 }
@@ -257,14 +257,128 @@
 
 @media (max-width: 768px) {
   .education-bg__columns {
-    left: -18%;
-    width: 136%;
-    grid-template-columns: repeat(4, minmax(72px, 1fr));
-    gap: 2rem;
+    top: -18%;
+    width: 190vw;
+    height: 138%;
+    grid-template-columns: repeat(4, minmax(64px, 1fr));
+    gap: clamp(1.5rem, 9vw, 3rem);
   }
 
   .education-bg__column:nth-child(n + 5) {
     display: none;
+  }
+}
+
+.education-orbit-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, oklch(0.78 0.08 235 / 0.24), transparent 15rem),
+    radial-gradient(circle at 50% 50%, oklch(0.94 0.03 220 / 0.86), transparent 28rem),
+    linear-gradient(135deg, oklch(0.985 0.008 220), oklch(0.92 0.03 225));
+}
+
+.dark .education-orbit-bg {
+  background:
+    radial-gradient(circle at 50% 50%, oklch(0.62 0.08 235 / 0.22), transparent 15rem),
+    radial-gradient(circle at 50% 50%, oklch(0.22 0.03 235 / 0.88), transparent 28rem),
+    linear-gradient(135deg, oklch(0.16 0.018 240), oklch(0.24 0.026 230));
+}
+
+.education-orbit-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--background), transparent 24%, transparent 76%, var(--background));
+  opacity: 0.55;
+}
+
+.education-orbit-bg__center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: clamp(5rem, 12vw, 9rem);
+  width: clamp(5rem, 12vw, 9rem);
+  border-radius: 999px;
+  background: oklch(0.72 0.08 235 / 0.1);
+  filter: blur(18px);
+  transform: translate(-50%, -50%);
+}
+
+.education-orbit-bg__item {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: clamp(2.3rem, 4.5vw, 4rem);
+  width: clamp(2.3rem, 4.5vw, 4rem);
+  animation: education-orbit-cw var(--duration) linear infinite;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.education-orbit-bg__item[data-direction="ccw"] {
+  animation-name: education-orbit-ccw;
+}
+
+.education-orbit-bg__icon {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  color: oklch(0.52 0.12 245 / 0.34);
+  transform: scale(var(--scale));
+}
+
+.dark .education-orbit-bg__icon {
+  color: oklch(0.78 0.08 235 / 0.26);
+}
+
+.education-orbit-bg__icon svg {
+  height: 100%;
+  width: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@keyframes education-orbit-cw {
+  from {
+    transform: rotate(var(--angle)) translateX(var(--radius)) translate(-50%, -50%);
+  }
+  to {
+    transform: rotate(calc(var(--angle) + 360deg)) translateX(var(--radius)) translate(-50%, -50%);
+  }
+}
+
+@keyframes education-orbit-ccw {
+  from {
+    transform: rotate(var(--angle)) translateX(var(--radius)) translate(-50%, -50%);
+  }
+  to {
+    transform: rotate(calc(var(--angle) - 360deg)) translateX(var(--radius)) translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 768px) {
+  .education-orbit-bg__item:nth-of-type(n + 8) {
+    display: none;
+  }
+
+  .education-orbit-bg__item {
+    height: 2.35rem;
+    width: 2.35rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .education-orbit-bg__item {
+    animation-duration: 90s;
   }
 }
 

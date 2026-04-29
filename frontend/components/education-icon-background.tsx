@@ -9,7 +9,7 @@ const iconColumns = [
   ["ruler", "diploma", "pen", "atom", "brain", "flask"],
 ]
 
-function EducationIcon({ name }: { name: string }) {
+export function EducationIcon({ name }: { name: string }) {
   switch (name) {
     case "book":
       return (
@@ -88,6 +88,16 @@ function EducationIcon({ name }: { name: string }) {
         <svg viewBox="0 0 48 48" aria-hidden="true">
           <path d="M9 32 32 9l7 7-23 23-7-7Z" />
           <path d="M17 31l-3-3M22 26l-2-2M27 21l-3-3M32 16l-2-2" />
+        </svg>
+      )
+    case "formula":
+      return (
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M9 15h13" />
+          <path d="M12 32 22 15" />
+          <path d="M9 32h10" />
+          <path d="M29 20l10 12" />
+          <path d="M39 20 29 32" />
         </svg>
       )
     default:

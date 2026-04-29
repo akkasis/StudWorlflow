@@ -168,7 +168,7 @@ export default function HomePage() {
             <div className="text-center max-w-4xl mx-auto">
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
-                Найди сту<span className="text-gradient">тьютор</span>а, который{" "}
+                Найди стутьютора, который{" "}
                 <span className="text-gradient">реально понимает</span>
               </h1>
               
