@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { Suspense, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Search, ArrowUpDown, CircleHelp, Sparkles } from "lucide-react"
@@ -26,7 +26,7 @@ const SORT_OPTIONS = [
   { value: "favorites", label: "Только избранные" },
 ]
 
-export default function MarketplacePage() {
+function MarketplacePageContent() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const [students, setStudents] = useState<StudentData[]>([])
@@ -199,5 +199,13 @@ export default function MarketplacePage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function MarketplacePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <MarketplacePageContent />
+    </Suspense>
   )
 }
