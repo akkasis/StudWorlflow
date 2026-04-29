@@ -191,19 +191,27 @@
   gap: clamp(1.5rem, 5vw, 5rem);
   transform: rotate(-12deg);
   transform-origin: center;
+  will-change: transform;
 }
 
 .education-bg__column {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.75rem, 4vw, 4rem);
-  transform: translateY(var(--offset));
+  transform: translate3d(0, var(--offset), 0);
   animation: education-scroll-up var(--duration) linear infinite;
+  backface-visibility: hidden;
   will-change: transform;
 }
 
 .education-bg__column[data-direction="down"] {
   animation-name: education-scroll-down;
+}
+
+.education-bg__track {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.75rem, 4vw, 4rem);
+  padding-bottom: clamp(1.75rem, 4vw, 4rem);
 }
 
 .education-bg__icon {
@@ -212,11 +220,11 @@
   width: clamp(2rem, 4vw, 3.75rem);
   align-items: center;
   justify-content: center;
-  color: oklch(0.58 0.09 245 / 0.16);
+  color: oklch(0.52 0.11 245 / 0.28);
 }
 
 .dark .education-bg__icon {
-  color: oklch(0.78 0.08 235 / 0.18);
+  color: oklch(0.78 0.08 235 / 0.22);
 }
 
 .education-bg__icon svg {
@@ -224,26 +232,26 @@
   width: 100%;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.6;
+  stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 
 @keyframes education-scroll-up {
   from {
-    transform: translateY(var(--offset));
+    transform: translate3d(0, var(--offset), 0);
   }
   to {
-    transform: translateY(calc(var(--offset) - 50%));
+    transform: translate3d(0, calc(var(--offset) - 50%), 0);
   }
 }
 
 @keyframes education-scroll-down {
   from {
-    transform: translateY(calc(var(--offset) - 50%));
+    transform: translate3d(0, calc(var(--offset) - 50%), 0);
   }
   to {
-    transform: translateY(var(--offset));
+    transform: translate3d(0, var(--offset), 0);
   }
 }
 

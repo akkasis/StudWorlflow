@@ -118,10 +118,14 @@ export function EducationIconBackground() {
             }
             key={index}
           >
-            {[...icons, ...icons].map((icon, iconIndex) => (
-              <span className="education-bg__icon" key={`${icon}-${iconIndex}`}>
-                <EducationIcon name={icon} />
-              </span>
+            {[0, 1].map((track) => (
+              <div className="education-bg__track" key={track}>
+                {icons.map((icon, iconIndex) => (
+                  <span className="education-bg__icon" key={`${icon}-${iconIndex}`}>
+                    <EducationIcon name={icon} />
+                  </span>
+                ))}
+              </div>
             ))}
           </div>
         ))}
