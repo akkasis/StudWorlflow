@@ -242,8 +242,13 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 items-center justify-center bg-card/50">
-        <div className="text-center px-12">
+      <div className="relative hidden flex-1 items-center justify-center overflow-hidden bg-card/50 lg:flex">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-80"
+          style={{ backgroundImage: "url('/login-image.png')" }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-background/82 via-background/54 to-background/76" />
+        <div className="relative z-10 text-center px-12">
           <h2 className="text-4xl font-bold">
             Найди подходящего стутьютора
           </h2>

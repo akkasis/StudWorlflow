@@ -101,7 +101,7 @@ export default function HomePage() {
                 <span className="text-gradient">Зарабатывай</span>.
                 <br />
                 Не понимаешь?{" "}
-                <span className="text-gradient">Найдем тебе стутьютора</span>.
+                Найдем тебе сту<span className="text-gradient">{"{тьютора}"}</span>.
               </h1>
 
               <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
@@ -168,7 +168,7 @@ export default function HomePage() {
             <div className="text-center max-w-4xl mx-auto">
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
-                Найди стутьютора, который{" "}
+                Найди сту<span className="text-gradient">тьютор</span>а, который{" "}
                 <span className="text-gradient">реально понимает</span>
               </h1>
               
