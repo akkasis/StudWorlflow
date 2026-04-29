@@ -3,11 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Eye, EyeOff, GraduationCap, ArrowRight } from "lucide-react"
+import { Eye, EyeOff, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SiteLogo } from "@/components/site-logo"
 import { useAuth } from "@/context/auth-context"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
@@ -67,12 +68,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
 
           <Link href="/" className="flex items-center gap-3 mb-12">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-              <GraduationCap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold">
-              Skill<span className="text-gradient">ent</span>
-            </span>
+            <SiteLogo markClassName="rounded-xl" textClassName="text-2xl" />
           </Link>
 
           <h1 className="text-3xl font-bold">С возвращением</h1>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { SiteLogo } from "@/components/site-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { StudentCard, StudentData } from "@/components/student-card"
 import { useAuth } from "@/context/auth-context"
@@ -75,12 +76,7 @@ export default function HomePage() {
         <header className="relative z-10">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-sm">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="hidden text-xl font-bold tracking-tight sm:inline">
-                Skill<span className="text-gradient">ent</span>
-              </span>
+              <SiteLogo textClassName="hidden sm:inline" />
             </Link>
 
             <div className="flex items-center gap-1 sm:gap-2">

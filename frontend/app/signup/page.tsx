@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
+import { SiteLogo } from "@/components/site-logo"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
@@ -136,10 +137,7 @@ export default function SignupPage() {
           <Card className="border-border/70 bg-card/90 shadow-xl shadow-primary/5 backdrop-blur">
             <CardHeader className="space-y-4">
               <Link href="/" className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary">
-                  <GraduationCap className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="text-2xl font-bold">Skillent</span>
+                <SiteLogo markClassName="h-11 w-11" textClassName="text-2xl" />
               </Link>
 
               <div>

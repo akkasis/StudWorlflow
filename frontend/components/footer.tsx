@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { GraduationCap } from "lucide-react"
+import { SiteLogo } from "@/components/site-logo"
 
 export function Footer() {
   return (
@@ -9,12 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary glow-primary">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold tracking-tight text-foreground">
-                Skill<span className="text-gradient">ent</span>
-              </span>
+              <SiteLogo markClassName="h-9 w-9 rounded-xl glow-primary" />
             </Link>
             <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-xs">
               Платформа, где студенты находят стутьюторов, договариваются о занятиях и помогают друг другу учиться эффективнее.

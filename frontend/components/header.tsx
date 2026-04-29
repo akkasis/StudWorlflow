@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation"
 import {
   Menu,
   X,
-  GraduationCap,
   LogOut,
   UserRound,
   MessageSquareMore,
@@ -19,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useAuth } from "@/context/auth-context"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { SiteLogo } from "@/components/site-logo"
 import { cn } from "@/lib/utils"
 import { apiUrl } from "@/lib/api"
 
@@ -139,14 +139,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary shadow-sm">
-                <GraduationCap className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <div className="leading-none">
-                <span className="text-xl font-bold tracking-tight">
-                  Skill<span className="text-gradient">ent</span>
-                </span>
-              </div>
+              <SiteLogo />
             </Link>
             <ThemeToggle />
           </div>
