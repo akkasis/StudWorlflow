@@ -29,6 +29,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [cooldownUntil, setCooldownUntil] = useState(0)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const storedCooldown = Number(localStorage.getItem(COOLDOWN_STORAGE_KEY) || 0)
@@ -45,11 +46,13 @@ export default function LoginPage() {
     if (!cooldownUntil) return
 
     const interval = window.setInterval(() => {
+      setNow(Date.now())
       const storedCooldown = Number(localStorage.getItem(COOLDOWN_STORAGE_KEY) || 0)
 
       if (!storedCooldown || storedCooldown <= Date.now()) {
         localStorage.removeItem(COOLDOWN_STORAGE_KEY)
         setCooldownUntil(0)
+        setNow(Date.now())
         return
       }
 
@@ -60,10 +63,10 @@ export default function LoginPage() {
   }, [cooldownUntil])
 
   const cooldownSeconds = useMemo(
-    () => Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)),
-    [cooldownUntil],
+    () => Math.max(0, Math.ceil((cooldownUntil - now) / 1000)),
+    [cooldownUntil, now],
   )
-  const isCooldownActive = cooldownUntil > Date.now()
+  const isCooldownActive = cooldownUntil > now
 
   const registerFailedAttempt = () => {
     const now = Date.now()
@@ -210,9 +213,9 @@ export default function LoginPage() {
               </div>
 
               {isCooldownActive ? (
-                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
-                  <p className="font-medium text-amber-200">Воу-воу, сбавь скорость.</p>
-                  <p className="mt-1 text-amber-100/80">
+                <div className="rounded-2xl border border-amber-500/40 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100">
+                  <p className="font-medium text-amber-800 dark:text-amber-200">Воу-воу, сбавь скорость.</p>
+                  <p className="mt-1 text-amber-700/90 dark:text-amber-100/80">
                     Слишком много попыток входа. Попробуй снова через {cooldownSeconds} сек. Если пароль забыт, его можно сбросить.
                   </p>
                   <Link href="/forgot-password" className="mt-3 inline-flex text-primary hover:underline">
