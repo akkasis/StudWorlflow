@@ -133,9 +133,12 @@ export class MessagesService {
         university: partnerProfile.university,
         isOnline: onlineUserIds.has(partnerProfile.userId),
         lastMessage: lastMessage?.text || '',
-          timestamp: lastMessage?.createdAt || conversation.updatedAt,
+        timestamp: lastMessage?.createdAt || conversation.updatedAt,
         lastSenderUserId: lastMessage?.senderUserId || null,
         unreadCount,
+        hasInterest: messages.some((message) =>
+          message.text.startsWith('Отклик на анкету'),
+        ),
       };
     });
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, ArrowRight } from "lucide-react"
@@ -14,6 +14,12 @@ import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
 export default function LoginPage() {
+  const LOGIN_FAIL_WINDOW_MS = 15_000
+  const LOGIN_FAIL_LIMIT = 5
+  const LOGIN_COOLDOWN_MS = 15_000
+  const FAILURES_STORAGE_KEY = "skillent-login-failures"
+  const COOLDOWN_STORAGE_KEY = "skillent-login-cooldown-until"
+
   const router = useRouter()
   const { login } = useAuth()
   const { showAlert } = useAppAlert()
@@ -22,9 +28,81 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [cooldownUntil, setCooldownUntil] = useState(0)
+
+  useEffect(() => {
+    const storedCooldown = Number(localStorage.getItem(COOLDOWN_STORAGE_KEY) || 0)
+
+    if (storedCooldown > Date.now()) {
+      setCooldownUntil(storedCooldown)
+      return
+    }
+
+    localStorage.removeItem(COOLDOWN_STORAGE_KEY)
+  }, [])
+
+  useEffect(() => {
+    if (!cooldownUntil) return
+
+    const interval = window.setInterval(() => {
+      const storedCooldown = Number(localStorage.getItem(COOLDOWN_STORAGE_KEY) || 0)
+
+      if (!storedCooldown || storedCooldown <= Date.now()) {
+        localStorage.removeItem(COOLDOWN_STORAGE_KEY)
+        setCooldownUntil(0)
+        return
+      }
+
+      setCooldownUntil(storedCooldown)
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [cooldownUntil])
+
+  const cooldownSeconds = useMemo(
+    () => Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000)),
+    [cooldownUntil],
+  )
+  const isCooldownActive = cooldownUntil > Date.now()
+
+  const registerFailedAttempt = () => {
+    const now = Date.now()
+    const storedAttempts = JSON.parse(localStorage.getItem(FAILURES_STORAGE_KEY) || "[]") as number[]
+    const recentAttempts = storedAttempts.filter((value) => now - value < LOGIN_FAIL_WINDOW_MS)
+    const nextAttempts = [...recentAttempts, now]
+
+    if (nextAttempts.length >= LOGIN_FAIL_LIMIT) {
+      const nextCooldownUntil = now + LOGIN_COOLDOWN_MS
+      localStorage.setItem(COOLDOWN_STORAGE_KEY, String(nextCooldownUntil))
+      localStorage.removeItem(FAILURES_STORAGE_KEY)
+      setCooldownUntil(nextCooldownUntil)
+      showAlert(
+        "Воу-воу, сбавь скорость",
+        "Слишком много попыток входа подряд. Подожди 15 секунд или воспользуйся восстановлением пароля.",
+      )
+      return
+    }
+
+    localStorage.setItem(FAILURES_STORAGE_KEY, JSON.stringify(nextAttempts))
+  }
+
+  const clearFailedAttempts = () => {
+    localStorage.removeItem(FAILURES_STORAGE_KEY)
+    localStorage.removeItem(COOLDOWN_STORAGE_KEY)
+    setCooldownUntil(0)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (isCooldownActive) {
+      showAlert(
+        "Немного подожди",
+        "Сейчас вход временно ограничен. Подожди пару секунд или воспользуйся сбросом пароля.",
+      )
+      return
+    }
+
     setIsLoading(true)
 
     try {
@@ -39,11 +117,13 @@ export default function LoginPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        registerFailedAttempt()
         showAlert("Не удалось войти", data?.message || "Проверь email и пароль, а затем попробуй снова.")
         setIsLoading(false)
         return
       }
 
+      clearFailedAttempts()
       const user = await login(data.access_token)
 
       setIsLoading(false)
@@ -88,6 +168,7 @@ export default function LoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   className="h-12"
+                  disabled={isCooldownActive}
                 />
               </Field>
 
@@ -102,6 +183,7 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="h-12 pr-12"
+                    disabled={isCooldownActive}
                   />
 
                   <button
@@ -127,8 +209,20 @@ export default function LoginPage() {
                 </Link>
               </div>
 
-              <Button type="submit" className="w-full h-12" disabled={isLoading}>
-                {isLoading ? "Вход..." : "Войти"}
+              {isCooldownActive ? (
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+                  <p className="font-medium text-amber-200">Воу-воу, сбавь скорость.</p>
+                  <p className="mt-1 text-amber-100/80">
+                    Слишком много попыток входа. Попробуй снова через {cooldownSeconds} сек. Если пароль забыт, его можно сбросить.
+                  </p>
+                  <Link href="/forgot-password" className="mt-3 inline-flex text-primary hover:underline">
+                    Сбросить пароль
+                  </Link>
+                </div>
+              ) : null}
+
+              <Button type="submit" className="w-full h-12" disabled={isLoading || isCooldownActive}>
+                {isCooldownActive ? `Подожди ${cooldownSeconds} сек` : isLoading ? "Вход..." : "Войти"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
 

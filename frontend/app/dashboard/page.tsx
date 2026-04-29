@@ -65,6 +65,7 @@ interface ConversationSummary {
   id: string
   profileId: string
   unreadCount: number
+  hasInterest?: boolean
 }
 
 const UNIVERSITY_NAME = "РАНХиГС"
@@ -114,6 +115,7 @@ export default function DashboardPage() {
   }, [user])
 
   const isTutor = profile?.role === "tutor"
+  const interestCount = recentConversations.filter((conversation) => conversation.hasInterest).length
 
   const toggleAvailabilityFormat = (format: string) => {
     if (!profile) return
@@ -416,9 +418,9 @@ export default function DashboardPage() {
                       <CardContent className="p-4">
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MessageSquare className="h-4 w-4" />
-                          <span className="text-sm">Диалоги</span>
+                          <span className="text-sm">Отклики</span>
                         </div>
-                        <p className="mt-2 text-2xl font-semibold">{recentConversations.length}</p>
+                        <p className="mt-2 text-2xl font-semibold">{interestCount}</p>
                       </CardContent>
                     </Card>
 

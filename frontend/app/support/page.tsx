@@ -33,6 +33,7 @@ function SupportPageContent() {
   const searchParams = useSearchParams()
   const requestedThreadId = searchParams.get("threadId")
   const [threads, setThreads] = useState<SupportThreadSummary[]>([])
+  const [threadSearch, setThreadSearch] = useState("")
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null)
   const [messages, setMessages] = useState<SupportMessage[]>([])
   const [text, setText] = useState("")
@@ -40,6 +41,16 @@ function SupportPageContent() {
 
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
   const isModerator = user?.role === "admin" || user?.role === "moderator"
+  const filteredThreads = threads.filter((thread) => {
+    const query = threadSearch.trim().toLowerCase()
+    if (!query) return true
+
+    return (
+      thread.name.toLowerCase().includes(query) ||
+      thread.email.toLowerCase().includes(query) ||
+      thread.lastMessage.toLowerCase().includes(query)
+    )
+  })
   const formatTime = (value: string) =>
     new Date(value).toLocaleTimeString([], {
       hour: "2-digit",
@@ -148,10 +159,16 @@ function SupportPageContent() {
               <div className="p-4 border-b border-border">
                 <h2 className="font-semibold">Поддержка</h2>
                 <p className="text-sm text-muted-foreground">Все обращения пользователей</p>
+                <Input
+                  value={threadSearch}
+                  onChange={(event) => setThreadSearch(event.target.value)}
+                  placeholder="Поиск по имени"
+                  className="mt-4 h-10"
+                />
               </div>
               <ScrollArea className="flex-1 min-h-0">
                 <div className="divide-y divide-border">
-                  {threads.map((thread) => (
+                  {filteredThreads.map((thread) => (
                     <button
                       key={thread.userId}
                       className={cn(
@@ -169,6 +186,11 @@ function SupportPageContent() {
                       <p className="text-xs text-muted-foreground truncate">{thread.lastMessage || thread.email}</p>
                     </button>
                   ))}
+                  {filteredThreads.length === 0 ? (
+                    <div className="p-4 text-sm text-muted-foreground">
+                      По этому запросу ничего не найдено.
+                    </div>
+                  ) : null}
                 </div>
               </ScrollArea>
             </aside>
