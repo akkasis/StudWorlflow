@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { EducationIconBackground } from "@/components/education-icon-background"
 import { SiteLogo } from "@/components/site-logo"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { StudentCard, StudentData } from "@/components/student-card"
@@ -68,12 +69,8 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex flex-col relative overflow-hidden">
-        <div className="fixed inset-0 bg-noise pointer-events-none" />
-        <div className="absolute top-0 left-1/4 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
-        <div className="absolute bottom-10 right-1/4 h-96 w-96 rounded-full bg-accent/30 blur-3xl" />
-
-        <header className="relative z-10">
+      <div className="min-h-screen flex flex-col relative">
+        <header className="relative z-20">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <Link href="/" className="flex items-center gap-3">
               <SiteLogo textClassName="hidden sm:inline" />
@@ -95,56 +92,59 @@ export default function HomePage() {
           </div>
         </header>
 
-        <main className="relative z-10 flex-1">
-          <section className="mx-auto flex max-w-7xl flex-col items-center px-4 pb-16 pt-16 text-center sm:px-6 sm:pt-24 lg:px-8">
-            <h1 className="max-w-5xl text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
-              Понимаешь предмет?{" "}
-              <span className="text-gradient">Зарабатывай</span>.
-              <br />
-              Не понимаешь?{" "}
-              <span className="text-gradient">Найдем тебе стутьютора</span>.
-            </h1>
+        <main className="relative flex-1">
+          <section className="relative overflow-hidden">
+            <EducationIconBackground />
+            <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center px-4 pb-16 pt-16 text-center sm:px-6 sm:pt-24 lg:px-8">
+              <h1 className="max-w-5xl text-4xl font-bold leading-tight sm:text-6xl lg:text-7xl">
+                Понимаешь предмет?{" "}
+                <span className="text-gradient">Зарабатывай</span>.
+                <br />
+                Не понимаешь?{" "}
+                <span className="text-gradient">Найдем тебе стутьютора</span>.
+              </h1>
 
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
-              Стутьютор — студент, который уже прошёл этот предмет
-              <br className="hidden sm:block" />
-              и объяснит тебе так, как сам хотел бы понять.
-            </p>
+              <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
+                Стутьютор — студент, который уже прошёл этот предмет
+                <br className="hidden sm:block" />
+                и объяснит тебе так, как сам хотел бы понять.
+              </p>
 
-            <div className="mt-12 grid w-full gap-4 md:grid-cols-3">
-              {landingFeatures.map((feature) => {
-                const Icon = feature.icon
+              <div className="mt-12 grid w-full gap-4 md:grid-cols-3">
+                {landingFeatures.map((feature) => {
+                  const Icon = feature.icon
 
-                return (
-                  <div
-                    key={feature.title}
-                    className="rounded-3xl border border-border/70 bg-card/85 p-6 text-left shadow-lg shadow-primary/5 backdrop-blur transition-all hover:border-primary/40 hover:shadow-primary/10"
-                  >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12">
-                      <Icon className="h-5 w-5 text-primary" />
+                  return (
+                    <div
+                      key={feature.title}
+                      className="rounded-3xl border border-border/70 bg-card/85 p-6 text-left shadow-lg shadow-primary/5 backdrop-blur transition-all hover:border-primary/40 hover:shadow-primary/10"
+                    >
+                      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/12">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <h2 className="mt-5 text-xl font-semibold">{feature.title}</h2>
+                      <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                        {feature.text}
+                      </p>
                     </div>
-                    <h2 className="mt-5 text-xl font-semibold">{feature.title}</h2>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-6 text-muted-foreground">
-                      {feature.text}
-                    </p>
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
 
-            <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
-              <Link href="/signup?role=tutor" className="w-full sm:w-auto">
-                <Button size="lg" className="h-14 w-full px-8 sm:w-52">
-                  <GraduationCap className="mr-2 h-4 w-4" />
-                  Стать партнером
-                </Button>
-              </Link>
-              <Link href="/signup?role=student" className="w-full sm:w-auto">
-                <Button size="lg" className="h-14 w-full px-8 sm:w-52">
-                  <UserRound className="mr-2 h-4 w-4" />
-                  Стать клиентом
-                </Button>
-              </Link>
+              <div className="mt-10 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+                <Link href="/signup?role=tutor" className="w-full sm:w-auto">
+                  <Button size="lg" className="h-14 w-full px-8 sm:w-52">
+                    <GraduationCap className="mr-2 h-4 w-4" />
+                    Стать партнером
+                  </Button>
+                </Link>
+                <Link href="/signup?role=student" className="w-full sm:w-auto">
+                  <Button size="lg" className="h-14 w-full px-8 sm:w-52">
+                    <UserRound className="mr-2 h-4 w-4" />
+                    Стать клиентом
+                  </Button>
+                </Link>
+              </div>
             </div>
           </section>
         </main>
@@ -156,18 +156,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div className="fixed inset-0 bg-noise pointer-events-none" />
-      
       <Header />
 
       <main className="flex-1 pt-16">
 
         {/* HERO ОСТАЁТСЯ КАК ЕСТЬ */}
         <section className="relative overflow-hidden py-24 sm:py-32 lg:py-40">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl" />
+          <EducationIconBackground />
           
-          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-4xl mx-auto">
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
