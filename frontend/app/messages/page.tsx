@@ -305,8 +305,8 @@ function MessagesPageContent() {
         <div className="mt-16 h-[calc(100dvh-4rem)] flex overflow-hidden min-h-0">
           <aside
             className={cn(
-              "w-full md:w-80 lg:w-96 border-r border-border bg-card flex flex-col min-h-0",
-              "md:block",
+              "w-full md:w-80 lg:w-96 border-r border-border bg-card flex flex-col min-h-0 overflow-hidden",
+              "md:flex",
               showConversations ? "block" : "hidden",
             )}
           >
@@ -316,78 +316,78 @@ function MessagesPageContent() {
                 Пиши студентам и стутьюторам напрямую.
               </p>
             </div>
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="space-y-2.5 p-3">
+                  {!loading && conversations.length === 0 && (
+                    <div className="rounded-[2rem] border border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
+                      Пока нет диалогов. Открой профиль стутьютора и начни переписку.
+                    </div>
+                  )}
 
-            <ScrollArea className="flex-1 min-h-0">
-              <div className="space-y-2.5 p-3">
-                {!loading && conversations.length === 0 && (
-                  <div className="rounded-[2rem] border border-border/70 bg-card/70 p-6 text-sm text-muted-foreground">
-                    Пока нет диалогов. Открой профиль стутьютора и начни переписку.
-                  </div>
-                )}
-
-                {conversations.map((conversation) => (
-                  <button
-                    key={conversation.profileId}
-                    className={cn(
-                      "w-full rounded-[1.75rem] border border-border/70 bg-card/85 px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-secondary/45",
-                      selectedConversation?.profileId === conversation.profileId &&
-                        "border-primary/35 bg-secondary shadow-md shadow-primary/5",
-                    )}
-                    onClick={() => {
-                      if (conversation.profileId === selectedConversation?.profileId) {
+                  {conversations.map((conversation) => (
+                    <button
+                      key={conversation.profileId}
+                      className={cn(
+                        "flex w-full items-start gap-3 rounded-[1.75rem] border border-border/70 bg-card/85 px-4 py-3 text-left shadow-sm transition-all hover:border-primary/30 hover:bg-secondary/45",
+                        selectedConversation?.profileId === conversation.profileId &&
+                          "border-primary/35 bg-secondary shadow-md shadow-primary/5",
+                      )}
+                      onClick={() => {
+                        if (conversation.profileId === selectedConversation?.profileId) {
+                          if (window.innerWidth < 768) {
+                            setShowConversations(false)
+                          }
+                          return
+                        }
+                        void loadConversation(conversation.profileId)
                         if (window.innerWidth < 768) {
                           setShowConversations(false)
                         }
-                        return
-                      }
-                      void loadConversation(conversation.profileId)
-                      if (window.innerWidth < 768) {
-                        setShowConversations(false)
-                      }
-                    }}
-                  >
-                    <div className="relative shrink-0">
-                      <UserAvatar
-                        src={conversation.avatar}
-                        name={conversation.name}
-                        isOnline={conversation.isOnline}
-                        className="h-14 w-14"
-                        indicatorClassName="h-4 w-4 border-[3px] border-card"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="font-medium text-foreground truncate">
-                          {conversation.name}
-                        </p>
-                        {conversation.unreadCount > 0 ? (
-                          <span className="min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
-                            {conversation.unreadCount}
-                          </span>
-                        ) : null}
+                      }}
+                    >
+                      <div className="relative shrink-0">
+                        <UserAvatar
+                          src={conversation.avatar}
+                          name={conversation.name}
+                          isOnline={conversation.isOnline}
+                          className="h-14 w-14"
+                          indicatorClassName="h-4 w-4 border-[3px] border-card"
+                        />
                       </div>
-                      <p className="mt-0.5 text-sm text-muted-foreground truncate">
-                        {conversation.role === "tutor" ? "Стутьютор" : "Студент"} • {conversation.university}
-                      </p>
-                      {conversation.isOnline ? (
-                        <p className="mt-1 text-sm font-medium text-emerald-500">В сети</p>
-                      ) : null}
-                      {!conversation.isOnline ? (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Был(а) в сети: {formatConversationTime(conversation.timestamp)}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="truncate font-medium text-foreground">
+                            {conversation.name}
+                          </p>
+                          {conversation.unreadCount > 0 ? (
+                            <span className="min-w-5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
+                              {conversation.unreadCount}
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          {conversation.role === "tutor" ? "Стутьютор" : "Студент"} • {conversation.university}
                         </p>
-                      ) : null}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </ScrollArea>
+                        {conversation.isOnline ? (
+                          <p className="mt-1 text-sm font-medium text-emerald-500">В сети</p>
+                        ) : (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Был(а) в сети: {formatConversationTime(conversation.timestamp)}
+                          </p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
+            </div>
           </aside>
 
           <div
             className={cn(
               "flex-1 flex flex-col bg-background min-h-0",
-              "md:block",
+              "md:flex",
               showConversations ? "hidden md:flex" : "flex",
             )}
           >

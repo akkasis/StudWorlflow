@@ -27,14 +27,6 @@ async function getProfile(id: string) {
   return res.json()
 }
 
-function formatAverageGrade(value?: number | null) {
-  if (value === null || value === undefined) {
-    return null
-  }
-
-  return value.toFixed(2).replace(/\.?0+$/, "")
-}
-
 export default async function ProfilePage({ params }: ProfilePageProps) {
   const { id } = await params
   const profile = await getProfile(id)
@@ -42,8 +34,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   if (!profile) {
     notFound()
   }
-
-  const averageGrade = formatAverageGrade(profile.averageGrade)
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -106,14 +96,6 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                     <div className="rounded-2xl border border-border/70 bg-card/80 p-4 shadow-sm">
                       <p className="text-sm text-muted-foreground">Стоимость занятия</p>
                       <p className="mt-1 text-2xl font-semibold">от {profile.pricePerHour} ₽</p>
-                      {averageGrade ? (
-                        <div className="mt-3 rounded-xl bg-secondary/60 px-3 py-2">
-                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                            Средний балл
-                          </p>
-                          <p className="mt-1 text-lg font-semibold">{averageGrade} / 5</p>
-                        </div>
-                      ) : null}
 
                       <div className="mt-4">
                         <ProfileActions

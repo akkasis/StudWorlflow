@@ -182,20 +182,6 @@ export default function HomePage() {
           <EducationIconBackground />
           
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {user?.role === "tutor" && showTutorSetupHint ? (
-              <div className="mx-auto mb-6 max-w-3xl rounded-3xl border border-primary/25 bg-card/85 p-5 text-left shadow-lg shadow-primary/5">
-                <p className="font-semibold">Анкета почти готова</p>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Чтобы студенты чаще откликались, заполни описание, навыки, цену и остальные детали своей анкеты.
-                </p>
-                <div className="mt-4">
-                  <Link href="/dashboard">
-                    <Button className="rounded-xl">Заполнить анкету</Button>
-                  </Link>
-                </div>
-              </div>
-            ) : null}
-
             <div className="text-center max-w-4xl mx-auto">
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">
@@ -206,6 +192,25 @@ export default function HomePage() {
               <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto">
                 Общайся со студентами, которые уже отлично прошли твои предметы.
               </p>
+
+              {user?.role === "tutor" && showTutorSetupHint ? (
+                <div className="mx-auto mt-6 flex max-w-2xl items-start gap-3 rounded-2xl border border-primary/20 bg-card/80 px-4 py-3 text-left shadow-sm shadow-primary/5 backdrop-blur">
+                  <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                    <ClipboardCheck className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">Анкета стутьютора работает лучше, если она заполнена полностью</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      Добавь описание, навыки и стоимость, чтобы студенты быстрее понимали, чем ты можешь помочь.
+                    </p>
+                  </div>
+                  <Link href="/dashboard" className="shrink-0">
+                    <Button variant="outline" className="rounded-xl">
+                      Заполнить
+                    </Button>
+                  </Link>
+                </div>
+              ) : null}
 
               <form
                 onSubmit={handleHeroSearch}

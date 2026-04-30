@@ -51,7 +51,6 @@ interface ProfileData {
   reviewCount: number
   description: string
   pricePerHour: number
-  averageGrade?: number | null
   recentReviews: RecentReview[]
   verified?: boolean
   availability?: {
@@ -81,7 +80,6 @@ export default function DashboardPage() {
   const { showAlert } = useAppAlert()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([])
-  const [averageGradeInput, setAverageGradeInput] = useState("")
   const [newTag, setNewTag] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [avatarLoading, setAvatarLoading] = useState(false)
@@ -109,11 +107,6 @@ export default function DashboardPage() {
     ])
       .then(([profileData, conversationsData]) => {
         setProfile(profileData)
-        setAverageGradeInput(
-          profileData.averageGrade !== null && profileData.averageGrade !== undefined
-            ? String(profileData.averageGrade)
-            : "",
-        )
         setRecentConversations(conversationsData.slice(0, 4))
       })
       .catch((error) => {
@@ -277,7 +270,6 @@ export default function DashboardPage() {
         payload.description = profile.description
         payload.tags = profile.tags
         payload.pricePerHour = profile.pricePerHour
-        payload.averageGrade = profile.averageGrade ?? null
         payload.banner = profile.banner
       }
 
@@ -298,11 +290,6 @@ export default function DashboardPage() {
       }
 
       setProfile(data)
-      setAverageGradeInput(
-        data.averageGrade !== null && data.averageGrade !== undefined
-          ? String(data.averageGrade)
-          : "",
-      )
       showAlert("Готово", "Изменения в профиле успешно сохранены.")
     } catch (error) {
       console.error(error)
@@ -743,45 +730,6 @@ export default function DashboardPage() {
                                 maxLength={6}
                                 className="mt-2 rounded-xl"
                               />
-                            </Field>
-                          </div>
-
-                          <div className="rounded-2xl border border-border/70 bg-card/70 p-4 md:col-span-2">
-                            <Field>
-                              <FieldLabel>Средний балл успеваемости</FieldLabel>
-                              <Input
-                                type="text"
-                                inputMode="decimal"
-                                placeholder="Например: 4.85"
-                                value={averageGradeInput}
-                                onChange={(e) => {
-                                  const normalizedValue = e.target.value.replace(',', '.')
-
-                                  if (!/^\d*(?:[.,]\d*)?$/.test(e.target.value)) {
-                                    return
-                                  }
-
-                                  setAverageGradeInput(e.target.value)
-
-                                  if (normalizedValue === "") {
-                                    setProfile({
-                                      ...profile,
-                                      averageGrade: null,
-                                    })
-                                    return
-                                  }
-
-                                  setProfile({
-                                    ...profile,
-                                    averageGrade: Number(normalizedValue),
-                                  })
-                                }}
-                                maxLength={4}
-                                className="mt-2 rounded-xl"
-                              />
-                              <p className="mt-2 text-sm text-muted-foreground">
-                                Поле необязательное. Если оставить пустым, в анкете оно не будет показываться.
-                              </p>
                             </Field>
                           </div>
 
