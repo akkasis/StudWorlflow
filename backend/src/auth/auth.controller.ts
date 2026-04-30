@@ -23,8 +23,10 @@ export class AuthController {
   }
 
   @Post('verify-email')
-  verifyEmail(@Body() body: { token: string }) {
-    return this.authService.verifyEmail(body.token);
+  verifyEmail(
+    @Body() body: { token?: string; email?: string; code?: string },
+  ) {
+    return this.authService.verifyEmail(body);
   }
 
   @Post('resend-verification')
@@ -38,7 +40,10 @@ export class AuthController {
   }
 
   @Post('reset-password')
-  resetPassword(@Body() body: { token: string; password: string }) {
-    return this.authService.resetPassword(body.token, body.password);
+  resetPassword(
+    @Body()
+    body: { token?: string; email?: string; code?: string; password: string },
+  ) {
+    return this.authService.resetPassword(body);
   }
 }

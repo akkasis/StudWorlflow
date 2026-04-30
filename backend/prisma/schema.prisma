@@ -169,6 +169,7 @@ model EmailVerificationToken {
   id        String   @id
   userId    Int
   token     String   @unique
+  code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
 
@@ -181,6 +182,7 @@ model PasswordResetToken {
   id        String   @id
   userId    Int
   token     String   @unique
+  code      String
   expiresAt DateTime
   createdAt DateTime @default(now())
 

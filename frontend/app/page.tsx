@@ -39,6 +39,7 @@ export default function HomePage() {
   const [students, setStudents] = useState<StudentData[]>([])
   const [loading, setLoading] = useState(true)
   const [heroQuery, setHeroQuery] = useState("")
+  const [showTutorSetupHint, setShowTutorSetupHint] = useState(false)
 
   useEffect(() => {
     if (authLoading) {
@@ -61,6 +62,12 @@ export default function HomePage() {
   }, [authLoading, user])
 
   const featuredStudents = students.slice(0, 6)
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    setShowTutorSetupHint(params.get("completeProfile") === "1")
+  }, [])
 
   const handleHeroSearch = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -175,6 +182,20 @@ export default function HomePage() {
           <EducationIconBackground />
           
           <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            {user?.role === "tutor" && showTutorSetupHint ? (
+              <div className="mx-auto mb-6 max-w-3xl rounded-3xl border border-primary/25 bg-card/85 p-5 text-left shadow-lg shadow-primary/5">
+                <p className="font-semibold">Анкета почти готова</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Чтобы студенты чаще откликались, заполни описание, навыки, цену и остальные детали своей анкеты.
+                </p>
+                <div className="mt-4">
+                  <Link href="/dashboard">
+                    <Button className="rounded-xl">Заполнить анкету</Button>
+                  </Link>
+                </div>
+              </div>
+            ) : null}
+
             <div className="text-center max-w-4xl mx-auto">
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold">

@@ -9,6 +9,7 @@ import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { apiUrl } from "@/lib/api"
 
@@ -142,7 +143,7 @@ function SupportPageContent() {
     await loadMessages(activeThreadId)
   }
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault()
       void sendMessage()
@@ -236,7 +237,7 @@ function SupportPageContent() {
                           : "bg-card border border-border",
                       )}
                     >
-                      <p className="text-sm">{message.text}</p>
+                      <p className="text-sm whitespace-pre-wrap break-words">{message.text}</p>
                       <p
                         className={cn(
                           "mt-1 text-xs",
@@ -256,11 +257,14 @@ function SupportPageContent() {
 
             <div className="border-t border-border bg-card p-4">
               <div className="max-w-3xl mx-auto flex gap-3">
-                <Input
+                <Textarea
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Напишите сообщение поддержке..."
+                  maxLength={2000}
+                  rows={1}
+                  className="min-h-14 max-h-40 flex-1 rounded-3xl"
                 />
                 <Button onClick={sendMessage}>
                   <Send className="h-4 w-4" />

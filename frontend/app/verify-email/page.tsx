@@ -16,9 +16,19 @@ function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const { showAlert } = useAppAlert()
   const [email, setEmail] = useState(searchParams.get("email") || "")
+  const [code, setCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isVerifying, setIsVerifying] = useState(Boolean(searchParams.get("token")))
   const [verified, setVerified] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(searchParams.get("sent") ? 60 : 0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = window.setInterval(() => {
+      setResendCooldown((current) => (current > 0 ? current - 1 : 0))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [resendCooldown])
 
   useEffect(() => {
     const token = searchParams.get("token")
@@ -55,6 +65,10 @@ function VerifyEmailContent() {
 
   const resendVerification = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (resendCooldown > 0) {
+      showAlert("Подожди немного", `Повторно отправить письмо можно через ${resendCooldown} сек.`)
+      return
+    }
     setIsSubmitting(true)
 
     try {
@@ -69,14 +83,47 @@ function VerifyEmailContent() {
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
+        if (data?.retryAfterSeconds) {
+          setResendCooldown(Number(data.retryAfterSeconds))
+        }
         showAlert("Не удалось отправить письмо", data?.message || "Проверь email и попробуй еще раз.")
         return
       }
 
+      setResendCooldown(60)
       showAlert("Письмо отправлено", data?.message || "Проверь почту и открой письмо для подтверждения.")
     } catch (error) {
       console.error(error)
       showAlert("Ошибка сервера", "Не удалось отправить письмо. Попробуй позже.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const verifyWithCode = async () => {
+    setIsSubmitting(true)
+
+    try {
+      const res = await fetch(apiUrl("/auth/verify-email"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, code }),
+      })
+
+      const data = await res.json().catch(() => null)
+
+      if (!res.ok) {
+        showAlert("Не удалось подтвердить почту", data?.message || "Проверь email и код из письма.")
+        return
+      }
+
+      setVerified(true)
+      showAlert("Готово", data?.message || "Почта успешно подтверждена.")
+    } catch (error) {
+      console.error(error)
+      showAlert("Ошибка сервера", "Сейчас не удалось подтвердить почту. Попробуй позже.")
     } finally {
       setIsSubmitting(false)
     }
@@ -130,12 +177,34 @@ function VerifyEmailContent() {
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
                       placeholder="you@university.edu"
+                      maxLength={120}
                       required
                     />
                   </Field>
 
-                  <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
-                    {isSubmitting ? "Отправляем..." : "Отправить письмо еще раз"}
+                  <Field>
+                    <FieldLabel>Код из письма</FieldLabel>
+                    <Input
+                      value={code}
+                      onChange={(event) => setCode(event.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                      placeholder="6 цифр"
+                      inputMode="numeric"
+                      maxLength={6}
+                    />
+                  </Field>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-12 w-full"
+                    disabled={isSubmitting || code.length !== 6 || !email}
+                    onClick={() => void verifyWithCode()}
+                  >
+                    Подтвердить по коду
+                  </Button>
+
+                  <Button type="submit" className="h-12 w-full" disabled={isSubmitting || resendCooldown > 0}>
+                    {isSubmitting ? "Отправляем..." : resendCooldown > 0 ? `Повтор через ${resendCooldown} сек` : "Отправить письмо еще раз"}
                   </Button>
                 </FieldGroup>
               </form>

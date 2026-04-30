@@ -1,6 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+const REVIEW_TEXT_MAX_LENGTH = 1500;
+
 @Injectable()
 export class ReviewsService {
   constructor(private prisma: PrismaService) {}
@@ -73,7 +75,7 @@ export class ReviewsService {
     const review = await this.prisma.review.create({
       data: {
         rating: data.rating,
-        text: data.text,
+        text: this.normalizeText(data.text),
         userId,
         profileId: data.profileId,
       },
@@ -114,7 +116,7 @@ export class ReviewsService {
       where: { id: reviewId },
       data: {
         rating: data.rating,
-        text: data.text,
+        text: this.normalizeText(data.text),
       },
     });
 
@@ -138,5 +140,19 @@ export class ReviewsService {
         },
       },
     });
+  }
+
+  private normalizeText(value: unknown) {
+    const normalized = String(value || '').trim();
+
+    if (!normalized) {
+      throw new BadRequestException('Текст отзыва не может быть пустым');
+    }
+
+    if (normalized.length > REVIEW_TEXT_MAX_LENGTH) {
+      throw new BadRequestException('Отзыв слишком длинный');
+    }
+
+    return normalized;
   }
 }

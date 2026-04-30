@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+const MESSAGE_MAX_LENGTH = 2000;
 
 interface ConversationRow {
   id: string;
@@ -251,11 +252,7 @@ export class MessagesService {
   }
 
   async sendMessage(userId: number, profileId: number, text: string) {
-    const normalizedText = text?.trim();
-
-    if (!normalizedText) {
-      throw new BadRequestException('Message cannot be empty');
-    }
+    const normalizedText = this.normalizeText(text);
 
     const { myProfile, conversationId, isSenderParticipantOne } =
       await this.prepareConversationContext(userId, profileId);
@@ -429,5 +426,19 @@ export class MessagesService {
   private async isUserIdOnline(userId: number) {
     const onlineIds = await this.getOnlineUserIds([userId]);
     return onlineIds.has(userId);
+  }
+
+  private normalizeText(text: string) {
+    const normalized = String(text || '').trim();
+
+    if (!normalized) {
+      throw new BadRequestException('Message cannot be empty');
+    }
+
+    if (normalized.length > MESSAGE_MAX_LENGTH) {
+      throw new BadRequestException('Сообщение слишком длинное');
+    }
+
+    return normalized;
   }
 }

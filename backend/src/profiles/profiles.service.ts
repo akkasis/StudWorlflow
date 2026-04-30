@@ -6,6 +6,12 @@ import { ProfileMetaService } from './profile-meta.service';
 
 const DEFAULT_UNIVERSITY = 'РАНХиГС';
 const ONLINE_WINDOW_MS = 5 * 60 * 1000;
+const PROFILE_NAME_MAX_LENGTH = 80;
+const PROFILE_DESCRIPTION_MAX_LENGTH = 1200;
+const TAG_MAX_LENGTH = 40;
+const TAG_MAX_COUNT = 12;
+const AVAILABILITY_TIME_MAX_LENGTH = 80;
+const AVAILABILITY_NOTE_MAX_LENGTH = 300;
 
 @Injectable()
 export class ProfilesService {
@@ -32,10 +38,11 @@ export class ProfilesService {
         userId,
         role,
 
-        name: data.name || '',
+        name: this.normalizeName(data.name || ''),
         university: DEFAULT_UNIVERSITY,
-        course: Number(data.course || 1),
-        description: role === 'tutor' ? data.description || '' : '',
+        course: this.normalizeCourse(data.course || 1),
+        description:
+          role === 'tutor' ? this.normalizeDescription(data.description || '') : '',
         priceFrom: role === 'tutor' ? Number(data.pricePerHour || 0) : 0,
         averageGrade:
           role === 'tutor'
@@ -43,7 +50,7 @@ export class ProfilesService {
             : null,
 
         profileTags: {
-          create: tags.map((tag: string) => ({
+          create: this.normalizeTags(tags).map((tag: string) => ({
             tag: {
               connectOrCreate: {
                 where: { name: tag },
@@ -79,11 +86,14 @@ export class ProfilesService {
       where: { userId },
       data: {
         role: normalizedRole,
-        name: data.name,
+        name: data.name ? this.normalizeName(data.name) : undefined,
         university: DEFAULT_UNIVERSITY,
-        course: data.course ? Number(data.course) : undefined,
+        course: data.course ? this.normalizeCourse(data.course) : undefined,
         avatarUrl: data.avatar,
-        description: isTutor ? data.description : undefined,
+        description:
+          isTutor && data.description !== undefined
+            ? this.normalizeDescription(data.description)
+            : undefined,
         priceFrom:
           isTutor && data.pricePerHour !== undefined
             ? Number(data.pricePerHour)
@@ -96,7 +106,7 @@ export class ProfilesService {
         profileTags: isTutor && data.tags
           ? {
               deleteMany: {},
-              create: data.tags.map((tag: string) => ({
+              create: this.normalizeTags(data.tags).map((tag: string) => ({
                 tag: {
                   connectOrCreate: {
                     where: { name: tag },
@@ -111,7 +121,10 @@ export class ProfilesService {
 
     if (isTutor) {
       await Promise.all([
-        this.profileMetaService.setAvailability(profile.id, data.availability),
+        this.profileMetaService.setAvailability(
+          profile.id,
+          this.normalizeAvailability(data.availability),
+        ),
         this.profileMetaService.setBanner(profile.id, data.banner),
       ]);
     }
@@ -548,5 +561,57 @@ export class ProfilesService {
     }
 
     return Math.round(parsedValue * 100) / 100;
+  }
+
+  private normalizeName(value: unknown) {
+    const normalized = String(value || '').trim();
+    if (!normalized) {
+      throw new BadRequestException('Имя обязательно');
+    }
+    if (normalized.length > PROFILE_NAME_MAX_LENGTH) {
+      throw new BadRequestException('Имя слишком длинное');
+    }
+    return normalized;
+  }
+
+  private normalizeCourse(value: unknown) {
+    const parsedValue = Number(value);
+    if (!Number.isInteger(parsedValue) || parsedValue < 1 || parsedValue > 6) {
+      throw new BadRequestException('Курс должен быть числом от 1 до 6');
+    }
+
+    return parsedValue;
+  }
+
+  private normalizeDescription(value: unknown) {
+    const normalized = String(value || '').trim();
+    if (normalized.length > PROFILE_DESCRIPTION_MAX_LENGTH) {
+      throw new BadRequestException('Описание слишком длинное');
+    }
+    return normalized;
+  }
+
+  private normalizeTags(value: unknown) {
+    const source = Array.isArray(value) ? value : [];
+    const normalized = source
+      .map((item) => String(item || '').trim())
+      .filter(Boolean)
+      .slice(0, TAG_MAX_COUNT)
+      .map((item) => item.slice(0, TAG_MAX_LENGTH));
+
+    return [...new Set(normalized)];
+  }
+
+  private normalizeAvailability(value: any) {
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    return {
+      formats: Array.isArray(value.formats) ? value.formats.slice(0, 2) : [],
+      primeDays: Array.isArray(value.primeDays) ? value.primeDays.slice(0, 7) : [],
+      primeTime: String(value.primeTime || '').slice(0, AVAILABILITY_TIME_MAX_LENGTH),
+      note: String(value.note || '').slice(0, AVAILABILITY_NOTE_MAX_LENGTH),
+    };
   }
 }

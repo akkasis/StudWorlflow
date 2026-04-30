@@ -1,0 +1,5 @@
+ALTER TABLE "EmailVerificationToken"
+ADD COLUMN "code" TEXT NOT NULL DEFAULT '000000';
+
+ALTER TABLE "PasswordResetToken"
+ADD COLUMN "code" TEXT NOT NULL DEFAULT '000000';

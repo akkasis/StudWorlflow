@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { KeyRound } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,12 +13,26 @@ import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 
 export default function ForgotPasswordPage() {
+  const router = useRouter()
   const { showAlert } = useAppAlert()
   const [email, setEmail] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [cooldown, setCooldown] = useState(0)
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const timer = window.setInterval(() => {
+      setCooldown((current) => (current > 0 ? current - 1 : 0))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [cooldown])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (cooldown > 0) {
+      showAlert("Подожди немного", `Повторно отправить письмо можно через ${cooldown} сек.`)
+      return
+    }
     setIsSubmitting(true)
 
     try {
@@ -32,11 +47,16 @@ export default function ForgotPasswordPage() {
       const data = await res.json().catch(() => null)
 
       if (!res.ok) {
+        if (data?.retryAfterSeconds) {
+          setCooldown(Number(data.retryAfterSeconds))
+        }
         showAlert("Не удалось отправить письмо", data?.message || "Проверь email и попробуй снова.")
         return
       }
 
+      setCooldown(60)
       showAlert("Письмо отправлено", data?.message || "Если аккаунт существует, мы уже отправили письмо для сброса пароля.")
+      router.push(`/reset-password?email=${encodeURIComponent(email)}`)
     } catch (error) {
       console.error(error)
       showAlert("Ошибка сервера", "Сейчас не удалось отправить письмо. Попробуй позже.")
@@ -70,12 +90,13 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     placeholder="you@university.edu"
+                    maxLength={120}
                     required
                   />
                 </Field>
 
-                <Button type="submit" className="h-12 w-full" disabled={isSubmitting}>
-                  {isSubmitting ? "Отправляем..." : "Отправить ссылку"}
+                <Button type="submit" className="h-12 w-full" disabled={isSubmitting || cooldown > 0}>
+                  {isSubmitting ? "Отправляем..." : cooldown > 0 ? `Повтор через ${cooldown} сек` : "Отправить ссылку и код"}
                   <KeyRound className="ml-2 h-4 w-4" />
                 </Button>
               </FieldGroup>

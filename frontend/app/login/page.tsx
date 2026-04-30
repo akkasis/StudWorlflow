@@ -135,7 +135,7 @@ export default function LoginPage() {
       if (user?.role === "admin" || user?.role === "moderator") {
         router.push("/admin")
       } else {
-        router.push(user?.role === "tutor" ? "/dashboard" : "/marketplace")
+        router.push(user?.role === "tutor" ? "/?completeProfile=1" : "/")
       }
 
     } catch (err) {
@@ -171,6 +171,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  maxLength={120}
                   className="h-12"
                   disabled={isCooldownActive}
                 />
@@ -186,6 +187,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    maxLength={120}
                     className="h-12 pr-12"
                     disabled={isCooldownActive}
                   />

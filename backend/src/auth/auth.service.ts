@@ -2,6 +2,8 @@ import {
   Injectable,
   BadRequestException,
   OnModuleInit,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
@@ -12,6 +14,13 @@ import { ROOT_ADMIN_EMAIL, ROOT_ADMIN_PASSWORD } from './auth.constants';
 import { MailService } from '../mail/mail.service';
 import { appConfig } from '../config/app.config';
 import { randomUUID } from 'crypto';
+
+const EMAIL_RESEND_COOLDOWN_MS = 60_000;
+const NAME_MAX_LENGTH = 80;
+const EMAIL_MAX_LENGTH = 120;
+const PASSWORD_MAX_LENGTH = 120;
+const DESCRIPTION_MAX_LENGTH = 1200;
+const EMAIL_CODE_LENGTH = 6;
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -66,6 +75,15 @@ export class AuthService implements OnModuleInit {
     if (!normalizedEmail) {
       throw new BadRequestException('Email обязателен');
     }
+    if (normalizedEmail.length > EMAIL_MAX_LENGTH) {
+      throw new BadRequestException('Email слишком длинный');
+    }
+    if (!password || String(password).trim().length < 6) {
+      throw new BadRequestException('Пароль должен быть не короче 6 символов');
+    }
+    if (String(password).length > PASSWORD_MAX_LENGTH) {
+      throw new BadRequestException('Пароль слишком длинный');
+    }
 
     if (!acceptedLegal) {
       throw new BadRequestException(
@@ -97,12 +115,12 @@ export class AuthService implements OnModuleInit {
         data: {
           userId: createdUser.id,
           role: normalizedRole,
-          name: profile?.name || name || '',
+          name: this.normalizeName(profile?.name || name || ''),
           university: 'РАНХиГС',
-          course: Number(profile?.course || course || 1),
+          course: this.normalizeCourse(profile?.course || course || 1),
           description:
             normalizedRole === 'tutor'
-              ? profile?.description || description || ''
+              ? this.normalizeDescription(profile?.description || description || '')
               : '',
           priceFrom:
             normalizedRole === 'tutor'
@@ -131,7 +149,7 @@ export class AuthService implements OnModuleInit {
       return createdUser;
     });
 
-    await this.createAndSendVerificationToken(user.id, normalizedEmail);
+    await this.createAndSendVerificationToken(user.id, normalizedEmail, true);
 
     return {
       success: true,
@@ -143,6 +161,9 @@ export class AuthService implements OnModuleInit {
 
   async login(email: string, password: string) {
     const normalizedEmail = String(email || '').trim().toLowerCase();
+    if (normalizedEmail.length > EMAIL_MAX_LENGTH) {
+      throw new BadRequestException('Email слишком длинный');
+    }
     const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
     });
@@ -226,17 +247,28 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async verifyEmail(token: string) {
-    const normalizedToken = String(token || '').trim();
-    if (!normalizedToken) {
-      throw new BadRequestException('Некорректный токен подтверждения');
-    }
+  async verifyEmail(data: { token?: string; email?: string; code?: string }) {
+    const normalizedToken = String(data?.token || '').trim();
+    const normalizedEmail = String(data?.email || '').trim().toLowerCase();
+    const normalizedCode = this.normalizeCode(data?.code);
 
-    const [record] = await this.prisma.$queryRaw<
+    let record:
+      | {
+          id: string;
+          userId: number;
+          token: string;
+          code: string;
+          expiresAt: Date;
+        }
+      | undefined;
+
+    if (normalizedToken) {
+      [record] = await this.prisma.$queryRaw<
       Array<{
         id: string;
         userId: number;
         token: string;
+        code: string;
         expiresAt: Date;
       }>
     >`
@@ -249,9 +281,38 @@ export class AuthService implements OnModuleInit {
       WHERE "token" = ${normalizedToken}
       LIMIT 1
     `;
+    } else {
+      if (!normalizedEmail || !normalizedCode) {
+        throw new BadRequestException('Нужны email и код подтверждения');
+      }
+
+      [record] = await this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          userId: number;
+          token: string;
+          code: string;
+          expiresAt: Date;
+        }>
+      >`
+        SELECT
+          evt."id",
+          evt."userId",
+          evt."token",
+          evt."code",
+          evt."expiresAt"
+        FROM "EmailVerificationToken" evt
+        INNER JOIN "User" u
+          ON u."id" = evt."userId"
+        WHERE
+          u."email" = ${normalizedEmail}
+          AND evt."code" = ${normalizedCode}
+        LIMIT 1
+      `;
+    }
 
     if (!record) {
-      throw new BadRequestException('Ссылка подтверждения недействительна');
+      throw new BadRequestException('Код или ссылка подтверждения недействительны');
     }
 
     if (record.expiresAt.getTime() < Date.now()) {
@@ -259,7 +320,7 @@ export class AuthService implements OnModuleInit {
         DELETE FROM "EmailVerificationToken"
         WHERE "userId" = ${record.userId}
       `;
-      throw new BadRequestException('Срок действия ссылки истек');
+      throw new BadRequestException('Срок действия кода или ссылки истек');
     }
 
     await this.prisma.$transaction([
@@ -284,6 +345,9 @@ export class AuthService implements OnModuleInit {
     const normalizedEmail = String(email || '').trim().toLowerCase();
     if (!normalizedEmail) {
       throw new BadRequestException('Email обязателен');
+    }
+    if (normalizedEmail.length > EMAIL_MAX_LENGTH) {
+      throw new BadRequestException('Email слишком длинный');
     }
 
     const user = await this.prisma.user.findUnique({
@@ -319,6 +383,9 @@ export class AuthService implements OnModuleInit {
     if (!normalizedEmail) {
       throw new BadRequestException('Email обязателен');
     }
+    if (normalizedEmail.length > EMAIL_MAX_LENGTH) {
+      throw new BadRequestException('Email слишком длинный');
+    }
 
     const user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -332,12 +399,15 @@ export class AuthService implements OnModuleInit {
       };
     }
 
+    await this.enforcePasswordResetCooldown(user.id);
+
     await this.prisma.$executeRaw`
       DELETE FROM "PasswordResetToken"
       WHERE "userId" = ${user.id}
     `;
 
     const token = randomUUID();
+    const code = this.generateEmailCode();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60);
 
     await this.prisma.$executeRaw`
@@ -345,18 +415,20 @@ export class AuthService implements OnModuleInit {
         "id",
         "userId",
         "token",
+        "code",
         "expiresAt"
       )
       VALUES (
         ${randomUUID()},
         ${user.id},
         ${token},
+        ${code},
         ${expiresAt}
       )
     `;
 
     const resetUrl = `${appConfig.appBaseUrl}/reset-password?token=${token}`;
-    await this.mailService.sendPasswordResetEmail(user.email, resetUrl);
+    await this.mailService.sendPasswordResetEmail(user.email, resetUrl, code);
 
     return {
       success: true,
@@ -365,21 +437,41 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  async resetPassword(token: string, password: string) {
-    const normalizedToken = String(token || '').trim();
-    if (!normalizedToken) {
-      throw new BadRequestException('Некорректный токен сброса');
-    }
+  async resetPassword(data: {
+    token?: string;
+    email?: string;
+    code?: string;
+    password: string;
+  }) {
+    const normalizedToken = String(data?.token || '').trim();
+    const normalizedEmail = String(data?.email || '').trim().toLowerCase();
+    const normalizedCode = this.normalizeCode(data?.code);
+    const password = data?.password;
 
     if (!password || String(password).trim().length < 6) {
       throw new BadRequestException('Пароль должен быть не короче 6 символов');
     }
+    if (String(password).length > PASSWORD_MAX_LENGTH) {
+      throw new BadRequestException('Пароль слишком длинный');
+    }
 
-    const [record] = await this.prisma.$queryRaw<
+    let record:
+      | {
+          id: string;
+          userId: number;
+          token: string;
+          code: string;
+          expiresAt: Date;
+        }
+      | undefined;
+
+    if (normalizedToken) {
+      [record] = await this.prisma.$queryRaw<
       Array<{
         id: string;
         userId: number;
         token: string;
+        code: string;
         expiresAt: Date;
       }>
     >`
@@ -392,9 +484,38 @@ export class AuthService implements OnModuleInit {
       WHERE "token" = ${normalizedToken}
       LIMIT 1
     `;
+    } else {
+      if (!normalizedEmail || !normalizedCode) {
+        throw new BadRequestException('Нужны email и код из письма');
+      }
+
+      [record] = await this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          userId: number;
+          token: string;
+          code: string;
+          expiresAt: Date;
+        }>
+      >`
+        SELECT
+          prt."id",
+          prt."userId",
+          prt."token",
+          prt."code",
+          prt."expiresAt"
+        FROM "PasswordResetToken" prt
+        INNER JOIN "User" u
+          ON u."id" = prt."userId"
+        WHERE
+          u."email" = ${normalizedEmail}
+          AND prt."code" = ${normalizedCode}
+        LIMIT 1
+      `;
+    }
 
     if (!record) {
-      throw new BadRequestException('Ссылка для сброса пароля недействительна');
+      throw new BadRequestException('Код или ссылка для сброса пароля недействительны');
     }
 
     if (record.expiresAt.getTime() < Date.now()) {
@@ -402,7 +523,7 @@ export class AuthService implements OnModuleInit {
         DELETE FROM "PasswordResetToken"
         WHERE "userId" = ${record.userId}
       `;
-      throw new BadRequestException('Срок действия ссылки истек');
+      throw new BadRequestException('Срок действия кода или ссылки истек');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -426,13 +547,22 @@ export class AuthService implements OnModuleInit {
     };
   }
 
-  private async createAndSendVerificationToken(userId: number, email: string) {
+  private async createAndSendVerificationToken(
+    userId: number,
+    email: string,
+    skipCooldown = false,
+  ) {
+    if (!skipCooldown) {
+      await this.enforceVerificationCooldown(userId);
+    }
+
     await this.prisma.$executeRaw`
       DELETE FROM "EmailVerificationToken"
       WHERE "userId" = ${userId}
     `;
 
     const token = randomUUID();
+    const code = this.generateEmailCode();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24);
 
     await this.prisma.$executeRaw`
@@ -440,18 +570,111 @@ export class AuthService implements OnModuleInit {
         "id",
         "userId",
         "token",
+        "code",
         "expiresAt"
       )
       VALUES (
         ${randomUUID()},
         ${userId},
         ${token},
+        ${code},
         ${expiresAt}
       )
     `;
 
     const verificationUrl = `${appConfig.appBaseUrl}/verify-email?token=${token}`;
-    await this.mailService.sendVerificationEmail(email, verificationUrl);
+    await this.mailService.sendVerificationEmail(email, verificationUrl, code);
+  }
+
+  private async enforceVerificationCooldown(userId: number) {
+    const [record] = await this.prisma.$queryRaw<Array<{ createdAt: Date }>>`
+      SELECT "createdAt"
+      FROM "EmailVerificationToken"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
+
+    this.throwCooldownIfNeeded(record?.createdAt, 'Повтори отправку письма чуть позже');
+  }
+
+  private async enforcePasswordResetCooldown(userId: number) {
+    const [record] = await this.prisma.$queryRaw<Array<{ createdAt: Date }>>`
+      SELECT "createdAt"
+      FROM "PasswordResetToken"
+      WHERE "userId" = ${userId}
+      LIMIT 1
+    `;
+
+    this.throwCooldownIfNeeded(record?.createdAt, 'Повтори запрос на сброс пароля чуть позже');
+  }
+
+  private throwCooldownIfNeeded(createdAt?: Date, message?: string) {
+    if (!createdAt) {
+      return;
+    }
+
+    const retryAfterMs = createdAt.getTime() + EMAIL_RESEND_COOLDOWN_MS - Date.now();
+    if (retryAfterMs <= 0) {
+      return;
+    }
+
+    const retryAfterSeconds = Math.ceil(retryAfterMs / 1000);
+    throw new HttpException({
+      message: `${message || 'Повтори попытку позже'}. Осталось ${retryAfterSeconds} сек.`,
+      retryAfterSeconds,
+    }, HttpStatus.TOO_MANY_REQUESTS);
+  }
+
+  private generateEmailCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }
+
+  private normalizeCode(value: unknown) {
+    const code = String(value || '')
+      .trim()
+      .replace(/[^\d]/g, '');
+
+    if (!code) {
+      return '';
+    }
+
+    if (code.length !== EMAIL_CODE_LENGTH) {
+      throw new BadRequestException('Код должен состоять из 6 цифр');
+    }
+
+    return code;
+  }
+
+  private normalizeName(value: unknown) {
+    const normalized = String(value || '').trim();
+
+    if (!normalized) {
+      throw new BadRequestException('Имя обязательно');
+    }
+
+    if (normalized.length > NAME_MAX_LENGTH) {
+      throw new BadRequestException('Имя слишком длинное');
+    }
+
+    return normalized;
+  }
+
+  private normalizeCourse(value: unknown) {
+    const parsedValue = Number(value);
+    if (!Number.isInteger(parsedValue) || parsedValue < 1 || parsedValue > 6) {
+      throw new BadRequestException('Курс должен быть числом от 1 до 6');
+    }
+
+    return parsedValue;
+  }
+
+  private normalizeDescription(value: unknown) {
+    const normalized = String(value || '').trim();
+    if (normalized.length > DESCRIPTION_MAX_LENGTH) {
+      throw new BadRequestException('Описание слишком длинное');
+    }
+
+    return normalized;
   }
 
   private async getEmailVerificationState(userId: number) {

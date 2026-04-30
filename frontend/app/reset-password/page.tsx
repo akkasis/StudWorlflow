@@ -16,6 +16,8 @@ function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { showAlert } = useAppAlert()
+  const [email, setEmail] = useState(searchParams.get("email") || "")
+  const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -26,8 +28,8 @@ function ResetPasswordContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!token) {
-      showAlert("Нет токена", "Ссылка для сброса пароля неполная или устарела.")
+    if (!token && (!email || code.length !== 6)) {
+      showAlert("Нужны данные из письма", "Введи email и код из письма или открой ссылку для сброса.")
       return
     }
 
@@ -49,7 +51,7 @@ function ResetPasswordContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify(token ? { token, password } : { email, code, password }),
       })
 
       const data = await res.json().catch(() => null)
@@ -87,6 +89,34 @@ function ResetPasswordContent() {
           <CardContent>
             <form onSubmit={handleSubmit}>
               <FieldGroup>
+                {!token ? (
+                  <>
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <Input
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        placeholder="you@university.edu"
+                        maxLength={120}
+                        required
+                      />
+                    </Field>
+
+                    <Field>
+                      <FieldLabel>Код из письма</FieldLabel>
+                      <Input
+                        value={code}
+                        onChange={(event) => setCode(event.target.value.replace(/[^\d]/g, "").slice(0, 6))}
+                        placeholder="6 цифр"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                      />
+                    </Field>
+                  </>
+                ) : null}
+
                 <Field>
                   <FieldLabel>Новый пароль</FieldLabel>
                   <div className="relative">
@@ -95,6 +125,7 @@ function ResetPasswordContent() {
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       placeholder="Минимум 6 символов"
+                      maxLength={120}
                       required
                       className="pr-12"
                     />
@@ -115,6 +146,7 @@ function ResetPasswordContent() {
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     placeholder="Еще раз введи пароль"
+                    maxLength={120}
                     required
                   />
                 </Field>

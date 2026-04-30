@@ -5,8 +5,8 @@ import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Send, ArrowLeft, MoreVertical, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Textarea } from "@/components/ui/textarea"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
 import { useAuth } from "@/context/auth-context"
@@ -284,7 +284,7 @@ function MessagesPageContent() {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       void handleSendMessage()
@@ -478,7 +478,7 @@ function MessagesPageContent() {
                               Отклик
                             </div>
                           ) : null}
-                          <p className="text-sm leading-relaxed">{message.text}</p>
+                          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">{message.text}</p>
                           <p
                             className={cn(
                               "text-xs mt-1",
@@ -501,12 +501,14 @@ function MessagesPageContent() {
 
                 <div className="px-4 py-4">
                   <div className="flex gap-3 max-w-3xl mx-auto">
-                    <Input
+                    <Textarea
                       placeholder="Напиши сообщение..."
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="h-14 flex-1 rounded-full border-border/80 bg-transparent px-6 shadow-none"
+                      maxLength={2000}
+                      rows={1}
+                      className="min-h-14 max-h-40 flex-1 rounded-3xl border-border/80 bg-transparent px-5 py-4 shadow-none"
                     />
                     <Button
                       className="h-14 w-14 rounded-full"

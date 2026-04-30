@@ -30,6 +30,8 @@ export interface SupportThreadResponse {
   messages: SupportMessage[];
 }
 
+const SUPPORT_MESSAGE_MAX_LENGTH = 2000;
+
 @Injectable()
 export class SupportService {
   constructor(private prisma: PrismaService) {}
@@ -217,10 +219,14 @@ export class SupportService {
   }
 
   private normalizeText(text: string) {
-    const normalized = text.trim();
+    const normalized = String(text || '').trim();
 
     if (!normalized) {
       throw new BadRequestException('Сообщение не может быть пустым');
+    }
+
+    if (normalized.length > SUPPORT_MESSAGE_MAX_LENGTH) {
+      throw new BadRequestException('Сообщение слишком длинное');
     }
 
     return normalized;

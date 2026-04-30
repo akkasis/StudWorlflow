@@ -81,7 +81,7 @@ export default function SignupPage() {
       }
 
       showAlert("Почта почти готова", data.message || "Мы отправили письмо для подтверждения почты.")
-      router.push(`/verify-email?email=${encodeURIComponent(email)}`)
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&sent=1`)
     } catch (error) {
       console.error(error)
       showAlert("Ошибка сервера", "Сейчас не удалось завершить регистрацию. Попробуй еще раз чуть позже.")
@@ -189,11 +189,11 @@ export default function SignupPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <Field>
                       <FieldLabel>Имя</FieldLabel>
-                      <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                      <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} maxLength={40} />
                     </Field>
                     <Field>
                       <FieldLabel>Фамилия</FieldLabel>
-                      <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                      <Input value={lastName} onChange={(e) => setLastName(e.target.value)} maxLength={40} />
                     </Field>
                   </div>
 
@@ -209,6 +209,7 @@ export default function SignupPage() {
                       placeholder="you@universitу.ru"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      maxLength={120}
                     />
                   </Field>
 
@@ -220,6 +221,7 @@ export default function SignupPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Придумай надежный пароль"
+                        maxLength={120}
                         className="pr-12"
                       />
                       <button

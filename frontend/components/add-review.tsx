@@ -103,6 +103,8 @@ export function AddReview({
           placeholder="Расскажи, как прошло занятие..."
           value={text}
           onChange={(e) => setText(e.target.value)}
+          maxLength={1500}
+          className="min-h-28 whitespace-pre-wrap"
         />
 
         {/* Button */}

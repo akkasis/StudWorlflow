@@ -185,7 +185,7 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
                           </div>
                           <Badge variant="secondary">★ {r.rating}</Badge>
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{r.text}</p>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground whitespace-pre-wrap break-words">{r.text}</p>
                       </div>
 
                       {index < profile.reviews.length - 1 ? <Separator className="mt-4" /> : null}

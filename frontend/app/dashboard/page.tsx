@@ -598,6 +598,7 @@ export default function DashboardPage() {
                             onChange={(e) =>
                               setProfile({ ...profile, name: e.target.value })
                             }
+                            maxLength={80}
                             className="mt-2 rounded-xl"
                           />
                         </Field>
@@ -619,9 +620,12 @@ export default function DashboardPage() {
                           <FieldLabel>Курс</FieldLabel>
                           <Input
                             value={profile.course || ""}
-                            onChange={(e) =>
-                              setProfile({ ...profile, course: e.target.value })
-                            }
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^\d]/g, "").slice(0, 2)
+                              setProfile({ ...profile, course: value })
+                            }}
+                            inputMode="numeric"
+                            maxLength={2}
                             className="mt-2 rounded-xl"
                           />
                         </Field>
@@ -683,6 +687,7 @@ export default function DashboardPage() {
                                     description: e.target.value,
                                   })
                                 }
+                                maxLength={1200}
                                 className="mt-2 min-h-32 rounded-xl"
                                 placeholder="Коротко расскажи, чем ты помогаешь и в чем твоя сильная сторона."
                               />
@@ -709,6 +714,7 @@ export default function DashboardPage() {
                                   value={newTag}
                                   onChange={(e) => setNewTag(e.target.value)}
                                   placeholder="Например: высшая математика"
+                                  maxLength={40}
                                   className="rounded-xl"
                                 />
                                 <Button type="button" onClick={handleAddTag} className="rounded-xl">
@@ -730,10 +736,11 @@ export default function DashboardPage() {
                                   setProfile({
                                     ...profile,
                                     pricePerHour: Number(
-                                      e.target.value.replace(/[^\d]/g, ""),
+                                      e.target.value.replace(/[^\d]/g, "").slice(0, 6),
                                     ),
                                   })
                                 }
+                                maxLength={6}
                                 className="mt-2 rounded-xl"
                               />
                             </Field>
@@ -769,6 +776,7 @@ export default function DashboardPage() {
                                     averageGrade: Number(normalizedValue),
                                   })
                                 }}
+                                maxLength={4}
                                 className="mt-2 rounded-xl"
                               />
                               <p className="mt-2 text-sm text-muted-foreground">
@@ -839,11 +847,12 @@ export default function DashboardPage() {
                                       availability: {
                                         formats: profile.availability?.formats || [],
                                         primeDays: profile.availability?.primeDays || [],
-                                        primeTime: e.target.value,
+                                        primeTime: e.target.value.slice(0, 80),
                                         note: profile.availability?.note || "",
                                       },
                                     })
                                   }
+                                  maxLength={80}
                                   placeholder="Например: будни после 18:00"
                                   className="rounded-xl"
                                 />
@@ -857,10 +866,11 @@ export default function DashboardPage() {
                                         formats: profile.availability?.formats || [],
                                         primeDays: profile.availability?.primeDays || [],
                                         primeTime: profile.availability?.primeTime || "",
-                                        note: e.target.value,
+                                        note: e.target.value.slice(0, 300),
                                       },
                                     })
                                   }
+                                  maxLength={300}
                                   placeholder="Опционально: свободный график, формат по договоренности и т.д."
                                   className="min-h-24 rounded-xl"
                                 />

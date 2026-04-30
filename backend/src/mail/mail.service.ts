@@ -13,10 +13,16 @@ export class MailService {
     }
   }
 
-  async sendVerificationEmail(email: string, verificationUrl: string) {
+  async sendVerificationEmail(
+    email: string,
+    verificationUrl: string,
+    verificationCode: string,
+  ) {
     const subject = 'Подтверждение почты в Skillent';
     const text = [
       'Подтверди свою почту, чтобы завершить регистрацию в Skillent.',
+      '',
+      `Код подтверждения: ${verificationCode}`,
       '',
       verificationUrl,
       '',
@@ -26,10 +32,16 @@ export class MailService {
     await this.sendMail(email, subject, text, verificationUrl);
   }
 
-  async sendPasswordResetEmail(email: string, resetUrl: string) {
+  async sendPasswordResetEmail(
+    email: string,
+    resetUrl: string,
+    resetCode: string,
+  ) {
     const subject = 'Сброс пароля в Skillent';
     const text = [
       'Мы получили запрос на сброс пароля в Skillent.',
+      '',
+      `Код для сброса пароля: ${resetCode}`,
       '',
       resetUrl,
       '',
