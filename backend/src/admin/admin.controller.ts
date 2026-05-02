@@ -6,6 +6,7 @@ import {
   Get,
   Param,
   Patch,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -39,6 +40,18 @@ export class AdminController {
   listUsers(@Req() req: any) {
     this.ensureModerator(req);
     return this.adminService.listUsers();
+  }
+
+  @Get('conversations')
+  listConversations(@Req() req: any, @Query('q') query?: string) {
+    this.ensureModerator(req);
+    return this.adminService.listConversations(query);
+  }
+
+  @Get('conversations/:conversationId')
+  getConversation(@Req() req: any, @Param('conversationId') conversationId: string) {
+    this.ensureModerator(req);
+    return this.adminService.getConversation(conversationId);
   }
 
   @Get('users/:userId/context')

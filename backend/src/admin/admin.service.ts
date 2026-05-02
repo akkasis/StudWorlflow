@@ -16,13 +16,20 @@ export class AdminService {
   ) {}
 
   async getOverview() {
-    const [users, profiles, reviews] = await Promise.all([
+    const [users, profiles, reviews, students, tutors, onlineUsers] = await Promise.all([
       this.prisma.user.count(),
       this.prisma.profile.count(),
       this.prisma.review.count(),
+      this.prisma.user.count({
+        where: { role: 'student' },
+      }),
+      this.prisma.user.count({
+        where: { role: 'tutor' },
+      }),
+      this.getOnlineUserCount(),
     ]);
 
-    return { users, profiles, reviews };
+    return { users, profiles, reviews, students, tutors, onlineUsers };
   }
 
   async listUsers() {
@@ -223,6 +230,242 @@ export class AdminService {
         createdAt: message.createdAt,
       })),
       recentConversations,
+    };
+  }
+
+  async listConversations(rawQuery?: string) {
+    const query = String(rawQuery || '').trim().toLowerCase();
+    const conversations = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        participantOneProfileId: number;
+        participantTwoProfileId: number;
+        updatedAt: Date;
+      }>
+    >`
+      SELECT
+        "id",
+        "participantOneProfileId",
+        "participantTwoProfileId",
+        "updatedAt"
+      FROM "Conversation"
+      ORDER BY "updatedAt" DESC
+    `;
+
+    const profileIds = Array.from(
+      new Set(
+        conversations.flatMap((conversation) => [
+          conversation.participantOneProfileId,
+          conversation.participantTwoProfileId,
+        ]),
+      ),
+    );
+
+    const profiles = profileIds.length
+      ? await this.prisma.profile.findMany({
+          where: {
+            id: {
+              in: profileIds,
+            },
+          },
+          include: {
+            user: {
+              select: {
+                email: true,
+                role: true,
+              },
+            },
+          },
+        })
+      : [];
+
+    const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
+    const messageRows = conversations.length
+      ? await this.prisma.$queryRaw<
+          Array<{
+            conversationId: string;
+            text: string;
+            createdAt: Date;
+          }>
+        >`
+          SELECT DISTINCT ON ("conversationId")
+            "conversationId",
+            "text",
+            "createdAt"
+          FROM "Message"
+          WHERE "conversationId" IN (${Prisma.join(
+            conversations.map((conversation) => conversation.id),
+          )})
+          ORDER BY "conversationId", "createdAt" DESC
+        `
+      : [];
+
+    const messagesByConversationId = new Map(
+      messageRows.map((message) => [message.conversationId, message]),
+    );
+
+    return conversations
+      .map((conversation) => {
+        const participantOne = profilesById.get(conversation.participantOneProfileId);
+        const participantTwo = profilesById.get(conversation.participantTwoProfileId);
+        const lastMessage = messagesByConversationId.get(conversation.id);
+
+        if (!participantOne || !participantTwo) {
+          return null;
+        }
+
+        return {
+          id: conversation.id,
+          updatedAt: conversation.updatedAt,
+          participantOne: {
+            profileId: String(participantOne.id),
+            userId: String(participantOne.userId),
+            name: participantOne.name,
+            email: participantOne.user.email,
+            role:
+              participantOne.user.role === 'tutor'
+                ? 'tutor'
+                : participantOne.role,
+            avatar: participantOne.avatarUrl,
+          },
+          participantTwo: {
+            profileId: String(participantTwo.id),
+            userId: String(participantTwo.userId),
+            name: participantTwo.name,
+            email: participantTwo.user.email,
+            role:
+              participantTwo.user.role === 'tutor'
+                ? 'tutor'
+                : participantTwo.role,
+            avatar: participantTwo.avatarUrl,
+          },
+          lastMessage: lastMessage?.text || '',
+          lastMessageAt: lastMessage?.createdAt || conversation.updatedAt,
+        };
+      })
+      .filter(Boolean)
+      .filter((conversation) => {
+        if (!query) {
+          return true;
+        }
+
+        return (
+          conversation.participantOne.name.toLowerCase().includes(query) ||
+          conversation.participantOne.email.toLowerCase().includes(query) ||
+          conversation.participantTwo.name.toLowerCase().includes(query) ||
+          conversation.participantTwo.email.toLowerCase().includes(query) ||
+          conversation.lastMessage.toLowerCase().includes(query)
+        );
+      });
+  }
+
+  async getConversation(conversationId: string) {
+    const [conversation] = await this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        participantOneProfileId: number;
+        participantTwoProfileId: number;
+      }>
+    >`
+      SELECT
+        "id",
+        "participantOneProfileId",
+        "participantTwoProfileId"
+      FROM "Conversation"
+      WHERE "id" = ${conversationId}
+      LIMIT 1
+    `;
+
+    if (!conversation) {
+      throw new BadRequestException('Диалог не найден');
+    }
+
+    const [participantOne, participantTwo, messages] = await Promise.all([
+      this.prisma.profile.findUnique({
+        where: { id: conversation.participantOneProfileId },
+        include: {
+          user: {
+            select: {
+              email: true,
+              role: true,
+            },
+          },
+        },
+      }),
+      this.prisma.profile.findUnique({
+        where: { id: conversation.participantTwoProfileId },
+        include: {
+          user: {
+            select: {
+              email: true,
+              role: true,
+            },
+          },
+        },
+      }),
+      this.prisma.$queryRaw<
+        Array<{
+          id: string;
+          senderUserId: number;
+          text: string;
+          createdAt: Date;
+          senderEmail: string;
+          senderName: string | null;
+          senderAvatar: string | null;
+        }>
+      >`
+        SELECT
+          m."id",
+          m."senderUserId",
+          m."text",
+          m."createdAt",
+          u."email" AS "senderEmail",
+          p."name" AS "senderName",
+          p."avatarUrl" AS "senderAvatar"
+        FROM "Message" m
+        JOIN "User" u ON u."id" = m."senderUserId"
+        LEFT JOIN "Profile" p ON p."userId" = u."id"
+        WHERE m."conversationId" = ${conversationId}
+        ORDER BY m."createdAt" ASC
+      `,
+    ]);
+
+    if (!participantOne || !participantTwo) {
+      throw new BadRequestException('Участники диалога не найдены');
+    }
+
+    return {
+      id: conversation.id,
+      participantOne: {
+        profileId: String(participantOne.id),
+        userId: String(participantOne.userId),
+        name: participantOne.name,
+        email: participantOne.user.email,
+        role:
+          participantOne.user.role === 'tutor'
+            ? 'tutor'
+            : participantOne.role,
+        avatar: participantOne.avatarUrl,
+      },
+      participantTwo: {
+        profileId: String(participantTwo.id),
+        userId: String(participantTwo.userId),
+        name: participantTwo.name,
+        email: participantTwo.user.email,
+        role:
+          participantTwo.user.role === 'tutor'
+            ? 'tutor'
+            : participantTwo.role,
+        avatar: participantTwo.avatarUrl,
+      },
+      messages: messages.map((message) => ({
+        id: message.id,
+        senderUserId: String(message.senderUserId),
+        senderName: message.senderName || message.senderEmail,
+        senderAvatar: message.senderAvatar || null,
+        text: message.text,
+        createdAt: message.createdAt,
+      })),
     };
   }
 
@@ -479,5 +722,18 @@ export class AdminService {
   private async isUserIdOnline(userId: number) {
     const onlineUserIds = await this.getOnlineUserIds([userId]);
     return onlineUserIds.has(userId);
+  }
+
+  private async getOnlineUserCount() {
+    const threshold = new Date(Date.now() - ONLINE_WINDOW_MS);
+    const rows = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
+      SELECT COUNT(*)::bigint AS "count"
+      FROM "User"
+      WHERE
+        "lastSeenAt" IS NOT NULL
+        AND "lastSeenAt" >= ${threshold}
+    `;
+
+    return Number(rows[0]?.count || 0);
   }
 }

@@ -99,13 +99,61 @@ interface UserContext {
   }>
 }
 
+interface AdminConversationSummary {
+  id: string
+  updatedAt: string
+  participantOne: {
+    profileId: string
+    userId: string
+    name: string
+    email: string
+    role: string
+    avatar?: string | null
+  }
+  participantTwo: {
+    profileId: string
+    userId: string
+    name: string
+    email: string
+    role: string
+    avatar?: string | null
+  }
+  lastMessage: string
+  lastMessageAt: string
+}
+
+interface AdminConversationDetails {
+  id: string
+  participantOne: AdminConversationSummary["participantOne"]
+  participantTwo: AdminConversationSummary["participantTwo"]
+  messages: Array<{
+    id: string
+    senderUserId: string
+    senderName: string
+    senderAvatar?: string | null
+    text: string
+    createdAt: string
+  }>
+}
+
 export default function AdminPage() {
   const { user } = useAuth()
   const { showAlert, showConfirm } = useAppAlert()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [reviews, setReviews] = useState<AdminReview[]>([])
-  const [overview, setOverview] = useState<{ users: number; profiles: number; reviews: number } | null>(null)
+  const [overview, setOverview] = useState<{
+    users: number
+    profiles: number
+    reviews: number
+    students: number
+    tutors: number
+    onlineUsers: number
+  } | null>(null)
   const [userContext, setUserContext] = useState<UserContext | null>(null)
+  const [conversations, setConversations] = useState<AdminConversationSummary[]>([])
+  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null)
+  const [selectedConversation, setSelectedConversation] = useState<AdminConversationDetails | null>(null)
+  const [conversationSearch, setConversationSearch] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [showAllUsers, setShowAllUsers] = useState(false)
@@ -115,7 +163,7 @@ export default function AdminPage() {
   const loadData = async () => {
     if (!token) return
 
-    const [overviewRes, usersRes, reviewsRes] = await Promise.all([
+    const [overviewRes, usersRes, reviewsRes, conversationsRes] = await Promise.all([
       fetch(apiUrl("/admin/overview"), {
         headers: { Authorization: `Bearer ${token}` },
       }),
@@ -125,18 +173,23 @@ export default function AdminPage() {
       fetch(apiUrl("/admin/reviews"), {
         headers: { Authorization: `Bearer ${token}` },
       }),
+      fetch(apiUrl("/admin/conversations"), {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
     ])
 
-    if (!overviewRes.ok || !usersRes.ok || !reviewsRes.ok) {
+    if (!overviewRes.ok || !usersRes.ok || !reviewsRes.ok || !conversationsRes.ok) {
       setOverview(null)
       setUsers([])
       setReviews([])
+      setConversations([])
       return
     }
 
     setOverview(await overviewRes.json())
     setUsers(await usersRes.json())
     setReviews(await reviewsRes.json())
+    setConversations(await conversationsRes.json())
   }
 
   useEffect(() => {
@@ -171,6 +224,66 @@ export default function AdminPage() {
 
     void loadContext()
   }, [selectedUserId, token])
+
+  useEffect(() => {
+    const loadConversations = async () => {
+      if (!token) {
+        setConversations([])
+        return
+      }
+
+      try {
+        const query = conversationSearch.trim()
+        const suffix = query ? `?q=${encodeURIComponent(query)}` : ""
+        const res = await fetch(apiUrl(`/admin/conversations${suffix}`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          setConversations([])
+          return
+        }
+
+        setConversations(await res.json())
+      } catch (error) {
+        console.error(error)
+        setConversations([])
+      }
+    }
+
+    void loadConversations()
+  }, [conversationSearch, token])
+
+  useEffect(() => {
+    const loadConversation = async () => {
+      if (!token || !selectedConversationId) {
+        setSelectedConversation(null)
+        return
+      }
+
+      try {
+        const res = await fetch(apiUrl(`/admin/conversations/${selectedConversationId}`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!res.ok) {
+          setSelectedConversation(null)
+          return
+        }
+
+        setSelectedConversation(await res.json())
+      } catch (error) {
+        console.error(error)
+        setSelectedConversation(null)
+      }
+    }
+
+    void loadConversation()
+  }, [selectedConversationId, token])
 
   const filteredUsers = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -312,12 +425,126 @@ export default function AdminPage() {
             </div>
 
             {overview && (
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
                 <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Пользователи</p><p className="text-3xl font-bold mt-2">{overview.users}</p></CardContent></Card>
                 <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Анкеты</p><p className="text-3xl font-bold mt-2">{overview.profiles}</p></CardContent></Card>
                 <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Отзывы</p><p className="text-3xl font-bold mt-2">{overview.reviews}</p></CardContent></Card>
+                <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Онлайн</p><p className="text-3xl font-bold mt-2">{overview.onlineUsers}</p></CardContent></Card>
+                <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Студенты</p><p className="text-3xl font-bold mt-2">{overview.students}</p></CardContent></Card>
+                <Card><CardContent className="p-5"><p className="text-sm text-muted-foreground">Тьюторы</p><p className="text-3xl font-bold mt-2">{overview.tutors}</p></CardContent></Card>
               </div>
             )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Все диалоги пользователей</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <div className="relative max-w-xl">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    value={conversationSearch}
+                    onChange={(e) => setConversationSearch(e.target.value)}
+                    placeholder="Поиск по имени, почте или тексту последнего сообщения"
+                    className="pl-11"
+                  />
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+                  <div className="space-y-3">
+                    {conversations.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                        Диалоги не найдены.
+                      </div>
+                    ) : (
+                      conversations.map((conversation) => (
+                        <button
+                          key={conversation.id}
+                          onClick={() => setSelectedConversationId(conversation.id)}
+                          className={`w-full rounded-2xl border p-4 text-left transition-colors ${
+                            selectedConversationId === conversation.id
+                              ? "border-primary bg-primary/8"
+                              : "border-border bg-card hover:bg-secondary/70"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <UserAvatar
+                              src={conversation.participantOne.avatar}
+                              name={conversation.participantOne.name}
+                              className="h-10 w-10"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium truncate">
+                                {conversation.participantOne.name} → {conversation.participantTwo.name}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground truncate">
+                                {conversation.participantOne.email} • {conversation.participantTwo.email}
+                              </p>
+                            </div>
+                          </div>
+                          <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                            {conversation.lastMessage || "Сообщений пока нет"}
+                          </p>
+                          <p className="mt-2 text-xs text-muted-foreground">
+                            {new Date(conversation.lastMessageAt).toLocaleString("ru-RU")}
+                          </p>
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="rounded-3xl border border-border bg-card p-5">
+                    {!selectedConversation ? (
+                      <div className="rounded-2xl border border-dashed border-border p-5 text-sm text-muted-foreground">
+                        Выбери диалог слева, и здесь появится полная переписка.
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-3 rounded-2xl bg-secondary/50 px-3 py-2">
+                            <UserAvatar
+                              src={selectedConversation.participantOne.avatar}
+                              name={selectedConversation.participantOne.name}
+                              className="h-10 w-10"
+                            />
+                            <div>
+                              <p className="font-medium">{selectedConversation.participantOne.name}</p>
+                              <p className="text-xs text-muted-foreground">{selectedConversation.participantOne.email}</p>
+                            </div>
+                          </div>
+                          <span className="text-muted-foreground">↔</span>
+                          <div className="flex items-center gap-3 rounded-2xl bg-secondary/50 px-3 py-2">
+                            <UserAvatar
+                              src={selectedConversation.participantTwo.avatar}
+                              name={selectedConversation.participantTwo.name}
+                              className="h-10 w-10"
+                            />
+                            <div>
+                              <p className="font-medium">{selectedConversation.participantTwo.name}</p>
+                              <p className="text-xs text-muted-foreground">{selectedConversation.participantTwo.email}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="max-h-[520px] space-y-3 overflow-y-auto pr-1">
+                          {selectedConversation.messages.map((message) => (
+                            <div key={message.id} className="rounded-2xl border border-border p-4">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <Badge variant="outline">{message.senderName}</Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(message.createdAt).toLocaleString("ru-RU")}
+                                </span>
+                              </div>
+                              <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{message.text}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
