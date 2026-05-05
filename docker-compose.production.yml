@@ -13,6 +13,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    # PostgreSQL is intentionally not published with ports.
+    # It should be reachable only from other compose services.
 
   backend:
     build:
@@ -45,7 +47,9 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "8080:8080"
+      # Adminer is bound to localhost only. Use an SSH tunnel to access it:
+      # ssh -L 8080:localhost:8080 user@SERVER_IP
+      - "127.0.0.1:8080:8080"
 
 volumes:
   postgres_data:

@@ -19,10 +19,21 @@ docker-compose -f docker-compose.production.yml up -d
 By default, Adminer will be available at:
 
 ```text
-http://YOUR_SERVER_IP:8080
+http://localhost:8080
 ```
 
-If you want, you can later hide it behind Nginx or limit access by firewall.
+In production, Adminer is bound to `127.0.0.1` and must not be exposed directly to the internet.
+Open it through an SSH tunnel from your local machine:
+
+```bash
+ssh -L 8080:localhost:8080 user@SERVER_IP
+```
+
+Then open locally:
+
+```text
+http://localhost:8080
+```
 
 ## 2. Login data
 
@@ -34,13 +45,13 @@ On the login screen, enter:
 - `Password`: the value from root `.env` -> `POSTGRES_PASSWORD`
 - `Database`: the value from root `.env` -> `POSTGRES_DB`
 
-With your current example, that would be:
+Example with placeholder values:
 
 - `System`: `PostgreSQL`
 - `Server`: `postgres`
-- `Username`: `skillent`
-- `Password`: `Lolipop1825!`
-- `Database`: `skillent`
+- `Username`: `studworkflow`
+- `Password`: `SUPER_DB_PASSWORD`
+- `Database`: `studworkflow`
 
 ## 3. What tables matter
 
@@ -154,8 +165,10 @@ Open `ReviewModerationState` and set:
 
 `Adminer` gives direct database access. In production, do not leave port `8080` open to the whole internet forever.
 
-Safer options:
+Required production setup:
 
-- allow access only from your IP in firewall
-- expose it only temporarily when you need it
-- put it behind Nginx basic auth
+- keep Adminer bound to `127.0.0.1:8080:8080` in `docker-compose.production.yml`
+- connect through an SSH tunnel:
+  `ssh -L 8080:localhost:8080 user@SERVER_IP`
+- do not commit real production passwords or `.env.production` secrets
+- use strong, unique values for `POSTGRES_PASSWORD`, `JWT_SECRET`, and `ROOT_ADMIN_PASSWORD`

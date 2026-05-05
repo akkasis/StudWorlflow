@@ -169,6 +169,7 @@ ROOT_ADMIN_PASSWORD=SUPER_STRONG_ADMIN_PASSWORD
 - `JWT_SECRET` должен быть длинным, случайным и уникальным
 - `ROOT_ADMIN_PASSWORD` нельзя оставлять дефолтным
 - `DATABASE_URL` должен совпадать с данными postgres
+- не коммить реальные production-секреты из `backend/.env.production`
 
 ### Шаг 10. Создать env для frontend
 
@@ -208,7 +209,9 @@ POSTGRES_DB=studworkflow
 
 Очень важно, чтобы:
 - `POSTGRES_PASSWORD` был сложным
+- `POSTGRES_PASSWORD` был уникальным и не совпадал с паролями от других сервисов
 - логин/пароль совпадали с тем, что ты вставил в `DATABASE_URL`
+- root `.env` с реальными production-секретами не должен попадать в git
 
 ---
 
@@ -420,6 +423,10 @@ npx prisma migrate deploy
 - root `.env` заполнен
 - `JWT_SECRET` заменен
 - root admin пароль заменен
+- `POSTGRES_PASSWORD`, `JWT_SECRET`, `ROOT_ADMIN_PASSWORD` сильные и уникальные
+- реальные production-секреты не закоммичены
+- Adminer не открыт публично в интернет и доступен только через SSH-туннель:
+  `ssh -L 8080:localhost:8080 user@SERVER_IP`
 - `docker compose ... up -d` выполнен
 - `https://skillent.ru/api/health` отвечает
 - `https://skillent.ru` открывается

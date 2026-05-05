@@ -10,6 +10,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: student_marketplace
     ports:
+      # Local development only. Production compose must not publish Postgres.
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
