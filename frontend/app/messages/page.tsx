@@ -14,6 +14,7 @@ import {
   FileText,
   MessageSquare,
   Mic,
+  MoreHorizontal,
   Paperclip,
   Pause,
   Pencil,
@@ -899,7 +900,7 @@ function MessagesPageContent() {
                         <button
                           key={conversation.profileId}
                           className={cn(
-                            "group flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
+                            "group flex w-full max-w-full min-w-0 items-start gap-3 overflow-hidden rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
                             isSelected
                               ? "border-primary/30 bg-secondary/55 shadow-sm"
                               : "border-border/60 bg-background/65 hover:border-primary/20 hover:bg-secondary/35",
@@ -943,7 +944,7 @@ function MessagesPageContent() {
                               ) : (
                                 <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/30" />
                               )}
-                              <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+                              <p className="min-w-0 max-w-full flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground">
                                 {getConversationPreview(conversation)}
                               </p>
                             </div>
@@ -1036,15 +1037,20 @@ function MessagesPageContent() {
                               key={message.id}
                               className={cn("flex", isOwnMessage ? "justify-end" : "justify-start")}
                             >
-                              <div className={cn("group flex max-w-[92%] gap-2 sm:max-w-[80%]", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
+                              <div className={cn("group flex min-w-0 max-w-[92%] gap-2 sm:max-w-[80%]", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      className="mt-1 h-8 w-8 shrink-0 rounded-full opacity-0 transition-opacity group-hover:opacity-100 data-[state=open]:opacity-100"
+                                      className={cn(
+                                        "mt-1 h-8 w-8 shrink-0 rounded-full opacity-100 transition-colors",
+                                        isOwnMessage
+                                          ? "text-primary-foreground/75 hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                                          : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
+                                      )}
                                     >
-                                      <MessageSquare className="h-4 w-4" />
+                                      <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align={isOwnMessage ? "end" : "start"} className="rounded-2xl">
@@ -1083,7 +1089,7 @@ function MessagesPageContent() {
 
                                 <div
                                   className={cn(
-                                    "rounded-[1.6rem] border px-4 py-3 shadow-sm",
+                                    "min-w-0 max-w-full overflow-hidden rounded-[1.6rem] border px-4 py-3 shadow-sm",
                                     isOwnMessage
                                       ? "rounded-br-md border-primary/20 bg-primary text-primary-foreground"
                                       : "rounded-bl-md border-border/60 bg-background/90 text-foreground",
@@ -1093,7 +1099,7 @@ function MessagesPageContent() {
                                     <button
                                       type="button"
                                       className={cn(
-                                        "mb-3 flex w-full flex-col rounded-2xl border px-3 py-2 text-left",
+                                        "mb-3 flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border px-3 py-2 text-left",
                                         isOwnMessage
                                           ? "border-primary-foreground/20 bg-primary-foreground/10"
                                           : "border-border/60 bg-secondary/35",
@@ -1102,14 +1108,14 @@ function MessagesPageContent() {
                                       <span className="text-[11px] font-semibold">
                                         {message.replyTo.senderUserId === Number(user?.id) ? "Ты" : selectedConversation.name}
                                       </span>
-                                      <span className="mt-1 truncate text-xs opacity-80">
+                                      <span className="mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs opacity-80">
                                         {getReplySnippet(message.replyTo)}
                                       </span>
                                     </button>
                                   ) : null}
 
                                   {message.text ? (
-                                    <p className="whitespace-pre-wrap break-words text-sm leading-6">
+                                    <p className="max-w-full whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">
                                       {message.text}
                                     </p>
                                   ) : null}
@@ -1291,8 +1297,8 @@ function MessagesPageContent() {
                         onChange={handleFilesSelected}
                       />
 
-                      <div className="flex items-end gap-3 rounded-[1.8rem] border border-border/70 bg-card p-3 shadow-sm">
-                        <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex items-center gap-3 rounded-[1.8rem] border border-border/70 bg-card p-3 shadow-sm">
+                        <div className="flex h-14 shrink-0 items-center gap-2">
                           <Button
                             type="button"
                             variant="ghost"
