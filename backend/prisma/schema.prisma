@@ -114,15 +114,41 @@ model Message {
   id                   String   @id
   conversationId       String
   senderUserId         Int
-  text                 String
+  text                 String   @default("")
+  kind                 String   @default("text")
   createdAt            DateTime @default(now())
+  editedAt             DateTime?
   readByParticipantOne Boolean  @default(false)
   readByParticipantTwo Boolean  @default(false)
+  readByParticipantOneAt DateTime?
+  readByParticipantTwoAt DateTime?
+  replyToMessageId     String?
 
   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender       User         @relation("SentMessages", fields: [senderUserId], references: [id], onDelete: Cascade)
+  replyTo      Message?     @relation("MessageReplies", fields: [replyToMessageId], references: [id], onDelete: SetNull)
+  replies      Message[]    @relation("MessageReplies")
+  attachments  MessageAttachment[]
 
   @@index([conversationId, createdAt])
+  @@index([replyToMessageId])
+}
+
+model MessageAttachment {
+  id          String   @id
+  messageId   String
+  kind        String
+  url         String
+  key         String
+  fileName    String
+  mimeType    String
+  fileSize    Int
+  durationSec Int?
+  createdAt   DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId, createdAt])
 }
 
 model SupportThread {
