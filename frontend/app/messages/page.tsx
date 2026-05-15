@@ -264,10 +264,10 @@ function VoiceMessagePlayer({
   return (
     <div
       className={cn(
-        "min-w-[250px] rounded-2xl border px-3 py-3 sm:min-w-[310px]",
+        "min-w-[250px] rounded-2xl px-1 py-1 sm:min-w-[310px]",
         isOwnMessage
-          ? "border-primary-foreground/20 bg-primary-foreground/10"
-          : "border-border/60 bg-secondary/35",
+          ? "bg-transparent"
+          : "bg-transparent",
       )}
     >
       <audio ref={audioRef} src={attachment.url} preload="metadata" />
@@ -899,7 +899,7 @@ function MessagesPageContent() {
                         <button
                           key={conversation.profileId}
                           className={cn(
-                            "group flex w-full items-start gap-3 rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
+                            "group flex w-full min-w-0 items-start gap-3 overflow-hidden rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
                             isSelected
                               ? "border-primary/30 bg-secondary/55 shadow-sm"
                               : "border-border/60 bg-background/65 hover:border-primary/20 hover:bg-secondary/35",
@@ -921,9 +921,9 @@ function MessagesPageContent() {
                             indicatorClassName="h-3.5 w-3.5 border-[3px] border-card"
                           />
 
-                          <div className="min-w-0 flex-1">
+                          <div className="min-w-0 flex-1 overflow-hidden">
                             <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1 overflow-hidden">
                                 <p className="truncate font-medium text-foreground">{conversation.name}</p>
                                 <p className="truncate text-xs text-muted-foreground">{conversation.university}</p>
                               </div>
@@ -937,13 +937,13 @@ function MessagesPageContent() {
                               </div>
                             </div>
 
-                            <div className="mt-2 flex items-center gap-2">
+                            <div className="mt-2 flex min-w-0 items-center gap-2 overflow-hidden">
                               {conversation.isOnline ? (
-                                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                               ) : (
-                                <span className="h-2 w-2 rounded-full bg-muted-foreground/30" />
+                                <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/30" />
                               )}
-                              <p className="truncate text-sm text-muted-foreground">
+                              <p className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
                                 {getConversationPreview(conversation)}
                               </p>
                             </div>
