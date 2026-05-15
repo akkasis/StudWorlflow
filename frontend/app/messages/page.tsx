@@ -848,7 +848,7 @@ function MessagesPageContent() {
                             indicatorClassName="h-3.5 w-3.5 border-[3px] border-card"
                           />
 
-                          <div className="w-0 min-w-0 overflow-hidden">
+                          <div className="min-w-0 max-w-full overflow-hidden">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1 overflow-hidden">
                                 <p className="truncate font-medium text-foreground">{conversation.name}</p>
