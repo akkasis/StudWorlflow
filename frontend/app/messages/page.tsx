@@ -9,17 +9,13 @@ import {
   CheckCheck,
   CircleAlert,
   Clock3,
-  Copy,
   Download,
   FileText,
   MessageSquare,
   Mic,
-  MoreHorizontal,
   Paperclip,
   Pause,
-  Pencil,
   Play,
-  Reply,
   Search,
   Send,
   Square,
@@ -32,12 +28,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import {
   Dialog,
   DialogContent,
@@ -73,14 +63,6 @@ interface MessageAttachment {
   durationSec?: number | null
 }
 
-interface MessageReplyPreview {
-  id: string
-  senderUserId: number
-  text: string
-  kind: string
-  attachments: MessageAttachment[]
-}
-
 interface ChatMessage {
   id: string
   senderUserId: number
@@ -91,7 +73,6 @@ interface ChatMessage {
   isEdited?: boolean
   status?: "sending" | "failed" | "delivered" | "read" | null
   attachments: MessageAttachment[]
-  replyTo?: MessageReplyPreview | null
   optimistic?: boolean
 }
 
@@ -173,15 +154,6 @@ function getConversationPreview(conversation: ConversationSummary) {
   }
 
   return "Пока без сообщений"
-}
-
-function getReplySnippet(reply?: MessageReplyPreview | null) {
-  if (!reply) return ""
-  if (reply.text) return reply.text
-  if (reply.attachments[0]?.kind === "voice") return "Голосовое сообщение"
-  if (reply.attachments[0]?.kind === "image") return "Изображение"
-  if (reply.attachments.length > 0) return reply.attachments[0].fileName
-  return "Сообщение"
 }
 
 function StatusIcon({ status }: { status?: ChatMessage["status"] }) {
@@ -349,8 +321,6 @@ function MessagesPageContent() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [composerFiles, setComposerFiles] = useState<ComposerFile[]>([])
-  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null)
-  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [recordingMs, setRecordingMs] = useState(0)
@@ -568,8 +538,6 @@ function MessagesPageContent() {
 
   const resetComposer = () => {
     setDraft("")
-    setReplyTarget(null)
-    setEditingMessage(null)
     clearComposerFiles()
   }
 
@@ -690,36 +658,7 @@ function MessagesPageContent() {
     const trimmedDraft = draft.trim()
     const hasVoice = composerFiles.length === 1 && composerFiles[0].file.type.startsWith("audio/")
 
-    if (!trimmedDraft && composerFiles.length === 0 && !editingMessage) {
-      return
-    }
-
-    if (editingMessage) {
-      setSending(true)
-      try {
-        const res = await fetch(apiUrl(`/messages/message/${editingMessage.id}`), {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: trimmedDraft }),
-        })
-
-        const data = await res.json()
-        if (!res.ok) {
-          showAlert("Не удалось изменить сообщение", data.message || "Попробуй еще раз.")
-          return
-        }
-
-        setMessagesList((current) => current.map((message) => (message.id === data.id ? data : message)))
-        resetComposer()
-      } catch (error) {
-        console.error(error)
-        showAlert("Ошибка", "Не получилось отредактировать сообщение.")
-      } finally {
-        setSending(false)
-      }
+    if (!trimmedDraft && composerFiles.length === 0) {
       return
     }
 
@@ -740,15 +679,6 @@ function MessagesPageContent() {
         fileSize: item.file.size,
         durationSec: hasVoice ? Math.round(recordingMs / 1000) : null,
       })),
-      replyTo: replyTarget
-        ? {
-            id: replyTarget.id,
-            senderUserId: replyTarget.senderUserId,
-            text: replyTarget.text,
-            kind: replyTarget.kind,
-            attachments: replyTarget.attachments,
-          }
-        : null,
       optimistic: true,
     }
 
@@ -758,10 +688,6 @@ function MessagesPageContent() {
     try {
       const formData = new FormData()
       formData.append("text", trimmedDraft)
-
-      if (replyTarget) {
-        formData.append("replyToMessageId", replyTarget.id)
-      }
 
       if (hasVoice) {
         formData.append("isVoiceNote", "true")
@@ -830,7 +756,7 @@ function MessagesPageContent() {
     return `${selectedConversation.role === "tutor" ? "Стутьютор" : "Студент"} • ${selectedConversation.university}`
   }, [selectedConversation])
 
-  const canSend = draft.trim().length > 0 || composerFiles.length > 0 || Boolean(editingMessage)
+  const canSend = draft.trim().length > 0 || composerFiles.length > 0
 
   return (
     <Protected>
@@ -849,11 +775,11 @@ function MessagesPageContent() {
           </DialogContent>
         </Dialog>
 
-        <div className="mt-16 h-[calc(100dvh-4rem)] overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
-          <div className="mx-auto flex h-full max-w-[1600px] gap-3 overflow-hidden lg:gap-4">
+        <div className="mt-16 h-[calc(100dvh-4rem)] min-w-0 overflow-hidden px-3 py-3 sm:px-4 sm:py-4">
+          <div className="mx-auto grid h-full max-w-[1600px] min-w-0 grid-cols-1 gap-3 overflow-hidden md:grid-cols-[minmax(0,23rem)_minmax(0,1fr)] lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] lg:gap-4">
             <aside
               className={cn(
-                "min-h-0 w-full shrink-0 overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 shadow-sm backdrop-blur md:w-[23rem] lg:w-[26rem]",
+                "min-h-0 min-w-0 overflow-hidden rounded-[2rem] border border-border/70 bg-card/85 shadow-sm backdrop-blur",
                 showConversations ? "flex" : "hidden md:flex",
                 "flex-col",
               )}
@@ -900,7 +826,7 @@ function MessagesPageContent() {
                         <button
                           key={conversation.profileId}
                           className={cn(
-                            "group flex w-full max-w-full min-w-0 items-start gap-3 overflow-hidden rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
+                            "group grid w-full max-w-full min-w-0 grid-cols-[3.5rem_minmax(0,1fr)] items-start gap-3 overflow-hidden rounded-[1.6rem] border px-3.5 py-3 text-left transition-all",
                             isSelected
                               ? "border-primary/30 bg-secondary/55 shadow-sm"
                               : "border-border/60 bg-background/65 hover:border-primary/20 hover:bg-secondary/35",
@@ -922,7 +848,7 @@ function MessagesPageContent() {
                             indicatorClassName="h-3.5 w-3.5 border-[3px] border-card"
                           />
 
-                          <div className="min-w-0 flex-1 overflow-hidden">
+                          <div className="w-0 min-w-0 overflow-hidden">
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1 overflow-hidden">
                                 <p className="truncate font-medium text-foreground">{conversation.name}</p>
@@ -938,13 +864,13 @@ function MessagesPageContent() {
                               </div>
                             </div>
 
-                            <div className="mt-2 flex min-w-0 items-center gap-2 overflow-hidden">
+                            <div className="mt-2 flex w-full min-w-0 items-center gap-2 overflow-hidden">
                               {conversation.isOnline ? (
                                 <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                               ) : (
                                 <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/30" />
                               )}
-                              <p className="min-w-0 max-w-full flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground">
+                              <p className="block w-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-muted-foreground">
                                 {getConversationPreview(conversation)}
                               </p>
                             </div>
@@ -1020,9 +946,9 @@ function MessagesPageContent() {
                     </div>
                   </div>
 
-                  <div className="relative min-h-0 flex-1 overflow-hidden bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.03),transparent_40%)]">
+                  <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden bg-[radial-gradient(circle_at_top,rgba(0,0,0,0.03),transparent_40%)]">
                     <ScrollArea className="h-full">
-                      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:px-5">
+                      <div className="mx-auto flex max-w-5xl min-w-0 flex-col gap-4 px-4 py-5 sm:px-5">
                         {messagesList.length === 0 ? (
                           <div className="py-12 text-center text-sm text-muted-foreground">
                             Сообщений пока нет. Напиши первым и договорись о занятии.
@@ -1035,87 +961,19 @@ function MessagesPageContent() {
                           return (
                             <div
                               key={message.id}
-                              className={cn("flex", isOwnMessage ? "justify-end" : "justify-start")}
+                              className={cn("flex min-w-0", isOwnMessage ? "justify-end" : "justify-start")}
                             >
-                              <div className={cn("group flex min-w-0 max-w-[92%] gap-2 sm:max-w-[80%]", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className={cn(
-                                        "mt-1 h-8 w-8 shrink-0 rounded-full opacity-100 transition-colors",
-                                        isOwnMessage
-                                          ? "text-primary-foreground/75 hover:bg-primary-foreground/15 hover:text-primary-foreground"
-                                          : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
-                                      )}
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align={isOwnMessage ? "end" : "start"} className="rounded-2xl">
-                                    <DropdownMenuItem onClick={() => setReplyTarget(message)}>
-                                      <Reply className="h-4 w-4" />
-                                      Ответить
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={async () => {
-                                        try {
-                                          await navigator.clipboard.writeText(message.text || getReplySnippet(message.replyTo))
-                                          showAlert("Скопировано", "Текст сообщения скопирован в буфер обмена.")
-                                        } catch (error) {
-                                          console.error(error)
-                                          showAlert("Ошибка", "Не удалось скопировать сообщение.")
-                                        }
-                                      }}
-                                    >
-                                      <Copy className="h-4 w-4" />
-                                      Копировать
-                                    </DropdownMenuItem>
-                                    {isOwnMessage ? (
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          setEditingMessage(message)
-                                          setReplyTarget(null)
-                                          setDraft(message.text)
-                                        }}
-                                      >
-                                        <Pencil className="h-4 w-4" />
-                                        Изменить
-                                      </DropdownMenuItem>
-                                    ) : null}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-
+                              <div className={cn("group flex w-fit min-w-0 max-w-[92%] gap-2 sm:max-w-[80%]", isOwnMessage ? "flex-row-reverse" : "flex-row")}>
                                 <div
                                   className={cn(
-                                    "min-w-0 max-w-full overflow-hidden rounded-[1.6rem] border px-4 py-3 shadow-sm",
+                                    "w-fit min-w-0 max-w-full overflow-hidden rounded-[1.6rem] border px-4 py-3 shadow-sm",
                                     isOwnMessage
                                       ? "rounded-br-md border-primary/20 bg-primary text-primary-foreground"
                                       : "rounded-bl-md border-border/60 bg-background/90 text-foreground",
                                   )}
                                 >
-                                  {message.replyTo ? (
-                                    <button
-                                      type="button"
-                                      className={cn(
-                                        "mb-3 flex w-full min-w-0 max-w-full flex-col overflow-hidden rounded-2xl border px-3 py-2 text-left",
-                                        isOwnMessage
-                                          ? "border-primary-foreground/20 bg-primary-foreground/10"
-                                          : "border-border/60 bg-secondary/35",
-                                      )}
-                                    >
-                                      <span className="text-[11px] font-semibold">
-                                        {message.replyTo.senderUserId === Number(user?.id) ? "Ты" : selectedConversation.name}
-                                      </span>
-                                      <span className="mt-1 block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-xs opacity-80">
-                                        {getReplySnippet(message.replyTo)}
-                                      </span>
-                                    </button>
-                                  ) : null}
-
                                   {message.text ? (
-                                    <p className="max-w-full whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere]">
+                                    <p className="max-w-full whitespace-pre-wrap break-words text-sm leading-6 [overflow-wrap:anywhere] [word-break:break-word]">
                                       {message.text}
                                     </p>
                                   ) : null}
@@ -1220,40 +1078,7 @@ function MessagesPageContent() {
                   </div>
 
                   <div className="border-t border-border/60 bg-background/70 px-4 py-4 sm:px-5">
-                    <div className="mx-auto max-w-5xl space-y-3">
-                      {replyTarget ? (
-                        <div className="flex items-start justify-between gap-3 rounded-[1.4rem] border border-border/60 bg-secondary/35 px-4 py-3">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-foreground">
-                              Ответ на {replyTarget.senderUserId === Number(user?.id) ? "свое сообщение" : selectedConversation.name}
-                            </p>
-                            <p className="mt-1 truncate text-sm text-muted-foreground">
-                              {getReplySnippet(replyTarget)}
-                            </p>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setReplyTarget(null)}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : null}
-
-                      {editingMessage ? (
-                        <div className="flex items-start justify-between gap-3 rounded-[1.4rem] border border-border/60 bg-secondary/35 px-4 py-3">
-                          <div className="min-w-0">
-                            <p className="text-xs font-semibold text-foreground">Редактирование сообщения</p>
-                            <p className="mt-1 truncate text-sm text-muted-foreground">
-                              Изменения увидит собеседник сразу после сохранения.
-                            </p>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => {
-                            setEditingMessage(null)
-                            setDraft("")
-                          }}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : null}
-
+                    <div className="mx-auto max-w-5xl min-w-0 space-y-3">
                       {composerFiles.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {composerFiles.map((item) => (
@@ -1297,13 +1122,13 @@ function MessagesPageContent() {
                         onChange={handleFilesSelected}
                       />
 
-                      <div className="flex items-center gap-3 rounded-[1.8rem] border border-border/70 bg-card p-3 shadow-sm">
-                        <div className="flex h-14 shrink-0 items-center gap-2">
+                      <div className="flex min-w-0 items-center gap-3 rounded-[1.8rem] border border-border/70 bg-card p-3 shadow-sm">
+                        <div className="flex h-14 shrink-0 items-center gap-2 self-center">
                           <Button
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-11 w-11 rounded-full"
+                            className="h-11 w-11 shrink-0 rounded-full"
                             onClick={openFilePicker}
                             disabled={isRecording}
                           >
@@ -1314,7 +1139,7 @@ function MessagesPageContent() {
                             type="button"
                             variant={isRecording ? "default" : "ghost"}
                             size="icon"
-                            className="h-11 w-11 rounded-full"
+                            className="h-11 w-11 shrink-0 rounded-full"
                             onClick={() => {
                               if (isRecording) {
                                 stopRecording()
@@ -1322,13 +1147,12 @@ function MessagesPageContent() {
                                 void startRecording()
                               }
                             }}
-                            disabled={Boolean(editingMessage)}
                           >
                             {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-5 w-5" />}
                           </Button>
                         </div>
 
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                           {isRecording ? (
                             <div className="flex min-h-14 items-center justify-between rounded-[1.2rem] border border-primary/20 bg-primary/5 px-4">
                               <div className="flex items-center gap-3">
@@ -1341,7 +1165,7 @@ function MessagesPageContent() {
                             </div>
                           ) : (
                             <Textarea
-                              placeholder={editingMessage ? "Измени сообщение..." : "Введите сообщение..."}
+                              placeholder="Введите сообщение..."
                               value={draft}
                               onChange={(event) => setDraft(event.target.value)}
                               onKeyDown={handleKeyDown}
@@ -1358,7 +1182,7 @@ function MessagesPageContent() {
                           onClick={() => void sendMessage()}
                           disabled={!canSend || sending || isRecording}
                         >
-                          {editingMessage ? <Pencil className="h-4 w-4" /> : <Send className="h-4 w-4" />}
+                          <Send className="h-4 w-4" />
                           <span className="sr-only">Отправить сообщение</span>
                         </Button>
                       </div>
