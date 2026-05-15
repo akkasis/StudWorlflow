@@ -28,23 +28,28 @@ export function StarRating({
     lg: "text-base",
   }
 
+  const normalizedRating = Math.max(0, Math.min(maxRating, Math.round(rating * 2) / 2))
+
   return (
     <div className="flex items-center gap-1">
       <div className="flex items-center">
         {Array.from({ length: maxRating }).map((_, index) => {
-          const filled = index < Math.floor(rating)
-          const partial = index === Math.floor(rating) && rating % 1 > 0
+          const fillPercent = Math.max(0, Math.min(1, normalizedRating - index)) * 100
 
           return (
-            <Star
-              key={index}
-              className={cn(
-                sizeClasses[size],
-                filled || partial
-                  ? "text-amber-400 fill-amber-400"
-                  : "text-muted-foreground/30"
-              )}
-            />
+            <span key={index} className="relative inline-flex">
+              <Star
+                className={cn(sizeClasses[size], "text-muted-foreground/30")}
+              />
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: `${fillPercent}%` }}
+              >
+                <Star
+                  className={cn(sizeClasses[size], "fill-amber-400 text-amber-400")}
+                />
+              </span>
+            </span>
           )
         })}
       </div>

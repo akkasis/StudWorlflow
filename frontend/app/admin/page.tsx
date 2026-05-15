@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Search, ExternalLink, LifeBuoy, MessagesSquare } from "lucide-react"
+import { Search, ExternalLink, LifeBuoy, MessagesSquare, Download, FileText, Mic } from "lucide-react"
 import { apiUrl } from "@/lib/api"
 import { useAppAlert } from "@/components/app-alert-provider"
 import { UserAvatar } from "@/components/user-avatar"
@@ -132,8 +132,38 @@ interface AdminConversationDetails {
     senderName: string
     senderAvatar?: string | null
     text: string
+    kind: string
+    attachments: Array<{
+      id: string
+      kind: "image" | "audio" | "voice" | "file"
+      url: string
+      fileName: string
+      mimeType: string
+      fileSize: number
+      durationSec?: number | null
+    }>
     createdAt: string
   }>
+}
+
+function formatFileSize(size: number) {
+  if (size >= 1024 * 1024) {
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`
+  }
+
+  if (size >= 1024) {
+    return `${Math.round(size / 1024)} KB`
+  }
+
+  return `${size} B`
+}
+
+function formatDuration(totalSeconds?: number | null) {
+  if (!totalSeconds) return "00:00"
+
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
 }
 
 export default function AdminPage() {
@@ -535,7 +565,69 @@ export default function AdminPage() {
                                   {new Date(message.createdAt).toLocaleString("ru-RU")}
                                 </span>
                               </div>
-                              <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{message.text}</p>
+                              {message.text ? (
+                                <p className="mt-3 whitespace-pre-wrap text-sm leading-6">{message.text}</p>
+                              ) : null}
+                              {message.attachments.length > 0 ? (
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                  {message.attachments.map((attachment) => {
+                                    if (attachment.kind === "image") {
+                                      return (
+                                        <a
+                                          key={attachment.id}
+                                          href={attachment.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          className="overflow-hidden rounded-2xl border border-border bg-secondary/30"
+                                        >
+                                          <img
+                                            src={attachment.url}
+                                            alt={attachment.fileName}
+                                            className="max-h-56 w-full object-cover"
+                                          />
+                                        </a>
+                                      )
+                                    }
+
+                                    if (attachment.kind === "voice" || attachment.kind === "audio") {
+                                      return (
+                                        <div
+                                          key={attachment.id}
+                                          className="rounded-2xl border border-border bg-secondary/30 p-3"
+                                        >
+                                          <div className="mb-2 flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                                            <span className="inline-flex items-center gap-2 font-medium text-foreground">
+                                              <Mic className="h-4 w-4" />
+                                              {attachment.kind === "voice" ? "Голосовое сообщение" : attachment.fileName}
+                                            </span>
+                                            <span>{formatDuration(attachment.durationSec)}</span>
+                                          </div>
+                                          <audio controls src={attachment.url} className="h-10 w-full" preload="metadata" />
+                                        </div>
+                                      )
+                                    }
+
+                                    return (
+                                      <a
+                                        key={attachment.id}
+                                        href={attachment.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-3 rounded-2xl border border-border bg-secondary/30 p-3"
+                                      >
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background">
+                                          <FileText className="h-4 w-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p className="truncate text-sm font-medium">{attachment.fileName}</p>
+                                          <p className="text-xs text-muted-foreground">{formatFileSize(attachment.fileSize)}</p>
+                                        </div>
+                                        <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                      </a>
+                                    )
+                                  })}
+                                </div>
+                              ) : null}
                             </div>
                           ))}
                         </div>

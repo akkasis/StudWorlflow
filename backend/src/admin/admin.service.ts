@@ -408,6 +408,7 @@ export class AdminService {
           id: string;
           senderUserId: number;
           text: string;
+          kind: string;
           createdAt: Date;
           senderEmail: string;
           senderName: string | null;
@@ -418,6 +419,7 @@ export class AdminService {
           m."id",
           m."senderUserId",
           m."text",
+          m."kind",
           m."createdAt",
           u."email" AS "senderEmail",
           p."name" AS "senderName",
@@ -432,6 +434,41 @@ export class AdminService {
 
     if (!participantOne || !participantTwo) {
       throw new BadRequestException('Участники диалога не найдены');
+    }
+
+    const attachments = messages.length
+      ? await this.prisma.$queryRaw<
+          Array<{
+            id: string;
+            messageId: string;
+            kind: string;
+            url: string;
+            fileName: string;
+            mimeType: string;
+            fileSize: number;
+            durationSec: number | null;
+          }>
+        >`
+          SELECT
+            "id",
+            "messageId",
+            "kind",
+            "url",
+            "fileName",
+            "mimeType",
+            "fileSize",
+            "durationSec"
+          FROM "MessageAttachment"
+          WHERE "messageId" IN (${Prisma.join(messages.map((message) => message.id))})
+          ORDER BY "createdAt" ASC
+        `
+      : [];
+    const attachmentsByMessageId = new Map<string, typeof attachments>();
+
+    for (const attachment of attachments) {
+      const current = attachmentsByMessageId.get(attachment.messageId) || [];
+      current.push(attachment);
+      attachmentsByMessageId.set(attachment.messageId, current);
     }
 
     return {
@@ -464,6 +501,8 @@ export class AdminService {
         senderName: message.senderName || message.senderEmail,
         senderAvatar: message.senderAvatar || null,
         text: message.text,
+        kind: message.kind,
+        attachments: attachmentsByMessageId.get(message.id) || [],
         createdAt: message.createdAt,
       })),
     };

@@ -12,15 +12,17 @@ import {
   Copy,
   Download,
   FileText,
-  ImageIcon,
   MessageSquare,
   Mic,
   Paperclip,
+  Pause,
   Pencil,
+  Play,
   Reply,
   Search,
   Send,
   Square,
+  Volume2,
   X,
 } from "lucide-react"
 import { Header } from "@/components/header"
@@ -199,6 +201,136 @@ function StatusIcon({ status }: { status?: ChatMessage["status"] }) {
   }
 
   return null
+}
+
+function VoiceMessagePlayer({
+  attachment,
+  isOwnMessage,
+}: {
+  attachment: MessageAttachment
+  isOwnMessage: boolean
+}) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [duration, setDuration] = useState(attachment.durationSec || 0)
+  const progress = duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0
+  const bars = [32, 58, 44, 76, 50, 88, 36, 64, 46, 72, 54, 82, 42, 68, 48, 78, 38, 60]
+
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+
+    const handleTimeUpdate = () => setCurrentTime(audio.currentTime)
+    const handleLoaded = () => {
+      if (Number.isFinite(audio.duration)) {
+        setDuration(Math.round(audio.duration))
+      }
+    }
+    const handleEnded = () => {
+      setIsPlaying(false)
+      setCurrentTime(0)
+    }
+
+    audio.addEventListener("timeupdate", handleTimeUpdate)
+    audio.addEventListener("loadedmetadata", handleLoaded)
+    audio.addEventListener("ended", handleEnded)
+
+    return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate)
+      audio.removeEventListener("loadedmetadata", handleLoaded)
+      audio.removeEventListener("ended", handleEnded)
+    }
+  }, [])
+
+  const togglePlayback = async () => {
+    const audio = audioRef.current
+    if (!audio || !attachment.url) return
+
+    if (isPlaying) {
+      audio.pause()
+      setIsPlaying(false)
+      return
+    }
+
+    try {
+      await audio.play()
+      setIsPlaying(true)
+    } catch {
+      setIsPlaying(false)
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        "min-w-[250px] rounded-2xl border px-3 py-3 sm:min-w-[310px]",
+        isOwnMessage
+          ? "border-primary-foreground/20 bg-primary-foreground/10"
+          : "border-border/60 bg-secondary/35",
+      )}
+    >
+      <audio ref={audioRef} src={attachment.url} preload="metadata" />
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          size="icon"
+          variant={isOwnMessage ? "secondary" : "default"}
+          className="h-11 w-11 shrink-0 rounded-full"
+          onClick={togglePlayback}
+          disabled={!attachment.url}
+        >
+          {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-0.5" />}
+        </Button>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+            <span className="inline-flex items-center gap-1.5 font-medium">
+              <Mic className="h-3.5 w-3.5" />
+              Голосовое сообщение
+            </span>
+            <span className="tabular-nums opacity-80">
+              {formatDuration(Math.round(currentTime) || duration)}
+            </span>
+          </div>
+
+          <div className="relative h-9 overflow-hidden rounded-full">
+            <div className="absolute inset-0 flex items-center gap-1">
+              {bars.map((height, index) => (
+                <span
+                  key={index}
+                  className={cn(
+                    "w-1.5 rounded-full transition-colors",
+                    isOwnMessage ? "bg-primary-foreground/35" : "bg-muted-foreground/30",
+                  )}
+                  style={{ height: `${height}%` }}
+                />
+              ))}
+            </div>
+            <div
+              className="absolute inset-y-0 left-0 overflow-hidden transition-[width]"
+              style={{ width: `${progress}%` }}
+            >
+              <div className="flex h-full items-center gap-1">
+                {bars.map((height, index) => (
+                  <span
+                    key={index}
+                    className={cn(
+                      "w-1.5 shrink-0 rounded-full",
+                      isOwnMessage ? "bg-primary-foreground" : "bg-primary",
+                    )}
+                    style={{ height: `${height}%` }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Volume2 className="h-4 w-4 shrink-0 opacity-70" />
+      </div>
+    </div>
+  )
 }
 
 function MessagesPageContent() {
@@ -877,11 +1009,13 @@ function MessagesPageContent() {
                         </p>
                       </div>
 
-                      <Link href={`/profile/${selectedConversation.profileId}`}>
-                        <Button variant="outline" className="rounded-full border-border/70">
-                          Профиль
-                        </Button>
-                      </Link>
+                      {selectedConversation.role === "tutor" ? (
+                        <Link href={`/profile/${selectedConversation.profileId}`}>
+                          <Button variant="outline" className="rounded-full border-border/70">
+                            Профиль
+                          </Button>
+                        </Link>
+                      ) : null}
                     </div>
                   </div>
 
@@ -1002,6 +1136,13 @@ function MessagesPageContent() {
                                       {message.attachments
                                         .filter((attachment) => attachment.kind === "voice" || attachment.kind === "audio")
                                         .map((attachment) => (
+                                          attachment.kind === "voice" ? (
+                                            <VoiceMessagePlayer
+                                              key={attachment.id}
+                                              attachment={attachment}
+                                              isOwnMessage={isOwnMessage}
+                                            />
+                                          ) : (
                                           <div
                                             key={attachment.id}
                                             className={cn(
@@ -1014,12 +1155,13 @@ function MessagesPageContent() {
                                             <div className="mb-2 flex items-center justify-between gap-3 text-xs">
                                               <div className="flex items-center gap-2">
                                                 <Mic className="h-4 w-4" />
-                                                <span>{attachment.kind === "voice" ? "Голосовое сообщение" : attachment.fileName}</span>
+                                                <span>{attachment.fileName}</span>
                                               </div>
                                               <span>{formatDuration(attachment.durationSec)}</span>
                                             </div>
                                             <audio controls src={attachment.url} className="h-10 w-full" preload="metadata" />
                                           </div>
+                                          )
                                         ))}
 
                                       {message.attachments
