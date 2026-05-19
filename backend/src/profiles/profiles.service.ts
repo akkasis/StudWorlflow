@@ -12,6 +12,8 @@ const TAG_MAX_LENGTH = 40;
 const TAG_MAX_COUNT = 12;
 const AVAILABILITY_TIME_MAX_LENGTH = 80;
 const AVAILABILITY_NOTE_MAX_LENGTH = 300;
+const PROFANITY_PATTERN =
+  /(?:бл[яеё]д|блят|блять|х[уy][йеёяию]|п[иe]зд|пиздец|[её]б|еба|ебан|ебат|ёбан|ёбат|су[кч]а|мраз|гандон|гондон|д[оа]лб[оа][её]б|муда[кч]|п[ие]д[ао]р|пидр|пидор|хер|залуп|шлюх|сучар|сучк|говн|дерьм|ублюд|твар|лох|чмо|жоп)/i;
 
 @Injectable()
 export class ProfilesService {
@@ -569,7 +571,26 @@ export class ProfilesService {
       .slice(0, TAG_MAX_COUNT)
       .map((item) => item.slice(0, TAG_MAX_LENGTH));
 
+    const blockedTag = normalized.find((item) => this.hasProfanity(item));
+    if (blockedTag) {
+      throw new BadRequestException(`Недопустимый предмет: ${blockedTag}`);
+    }
+
     return [...new Set(normalized)];
+  }
+
+  private hasProfanity(value: string) {
+    const normalized = value
+      .toLowerCase()
+      .replace(/[^а-яёa-z0-9]+/gi, '')
+      .replace(/0/g, 'о')
+      .replace(/3/g, 'з')
+      .replace(/4/g, 'ч')
+      .replace(/6/g, 'б')
+      .replace(/x/g, 'х')
+      .replace(/y/g, 'у');
+
+    return PROFANITY_PATTERN.test(normalized);
   }
 
   private normalizeAvailability(value: any) {

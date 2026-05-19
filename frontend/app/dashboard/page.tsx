@@ -105,14 +105,24 @@ const subjectOptions = [
   "Академическое письмо",
 ]
 const profanityPattern =
-  /\b(?:бля|бляд|блять|хуй|хуе|хуё|пизд|пиздец|еба|ебан|ёбан|ебат|ёб|сука|мраз|гандон|долбоеб|долбоёб|мудак|пидор|пидр|шлюх)\w*\b/i
+  /(?:бл[яеё]д|блят|блять|х[уy][йеёяию]|п[иe]зд|пиздец|[её]б|еба|ебан|ебат|ёбан|ёбат|су[кч]а|мраз|гандон|гондон|д[оа]лб[оа][её]б|муда[кч]|п[ие]д[ао]р|пидр|пидор|хер|залуп|шлюх|сучар|сучк|говн|дерьм|ублюд|твар|лох|чмо|жоп)/i
 
 function normalizeSubject(subject: string) {
   return subject.trim().replace(/\s+/g, " ")
 }
 
 function hasProfanity(value: string) {
-  return profanityPattern.test(value.toLowerCase())
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^а-яёa-z0-9]+/gi, "")
+    .replace(/0/g, "о")
+    .replace(/3/g, "з")
+    .replace(/4/g, "ч")
+    .replace(/6/g, "б")
+    .replace(/x/g, "х")
+    .replace(/y/g, "у")
+
+  return profanityPattern.test(normalized)
 }
 
 export default function DashboardPage() {
@@ -325,6 +335,13 @@ export default function DashboardPage() {
       }
 
       if (isTutor) {
+        const blockedTag = profile.tags.find((tag) => hasProfanity(tag))
+        if (blockedTag) {
+          showAlert("Проверь навыки", `Удали недопустимый предмет: ${blockedTag}`)
+          setIsSaving(false)
+          return
+        }
+
         payload.description = profile.description
         payload.tags = profile.tags
         payload.pricePerHour = profile.pricePerHour
