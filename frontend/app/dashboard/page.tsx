@@ -22,6 +22,13 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Header } from "@/components/header"
 import { Protected } from "@/components/protected"
 import { useAuth } from "@/context/auth-context"
@@ -74,13 +81,47 @@ const formatOptions = [
   { label: "Онлайн", value: "online" },
   { label: "Оффлайн", value: "offline" },
 ]
+const CUSTOM_SUBJECT_VALUE = "__custom_subject__"
+const subjectOptions = [
+  "Высшая математика",
+  "Математический анализ",
+  "Линейная алгебра",
+  "Теория вероятностей",
+  "Статистика",
+  "Программирование",
+  "Python",
+  "JavaScript",
+  "Алгоритмы",
+  "Базы данных",
+  "Экономика",
+  "Финансы",
+  "Менеджмент",
+  "Маркетинг",
+  "Философия",
+  "Социология",
+  "История",
+  "Право",
+  "Английский язык",
+  "Академическое письмо",
+]
+const profanityPattern =
+  /\b(?:бля|бляд|блять|хуй|хуе|хуё|пизд|пиздец|еба|ебан|ёбан|ебат|ёб|сука|мраз|гандон|долбоеб|долбоёб|мудак|пидор|пидр|шлюх)\w*\b/i
+
+function normalizeSubject(subject: string) {
+  return subject.trim().replace(/\s+/g, " ")
+}
+
+function hasProfanity(value: string) {
+  return profanityPattern.test(value.toLowerCase())
+}
 
 export default function DashboardPage() {
   const { user, loading } = useAuth()
   const { showAlert } = useAppAlert()
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [recentConversations, setRecentConversations] = useState<ConversationSummary[]>([])
-  const [newTag, setNewTag] = useState("")
+  const [selectedSubject, setSelectedSubject] = useState("")
+  const [customSubject, setCustomSubject] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [avatarLoading, setAvatarLoading] = useState(false)
   const [bannerLoading, setBannerLoading] = useState(false)
@@ -164,14 +205,31 @@ export default function DashboardPage() {
   const handleAddTag = () => {
     if (!profile) return
 
-    const tag = newTag.trim()
-    if (tag && !profile.tags.includes(tag)) {
-      setProfile({
-        ...profile,
-        tags: [...profile.tags, tag],
-      })
-      setNewTag("")
+    const isCustomSubject = selectedSubject === CUSTOM_SUBJECT_VALUE
+    const tag = normalizeSubject(isCustomSubject ? customSubject : selectedSubject)
+
+    if (!tag) {
+      showAlert("Выбери предмет", "Выбери предмет из списка или укажи свой вариант.")
+      return
     }
+
+    if (isCustomSubject && hasProfanity(tag)) {
+      showAlert("Проверь свой вариант", "В названии предмета нельзя использовать оскорбления или ненормативную лексику.")
+      return
+    }
+
+    const alreadyExists = profile.tags.some((item) => item.toLowerCase() === tag.toLowerCase())
+    if (alreadyExists) {
+      showAlert("Предмет уже добавлен", "Этот предмет уже есть в твоих навыках.")
+      return
+    }
+
+    setProfile({
+      ...profile,
+      tags: [...profile.tags, tag],
+    })
+    setSelectedSubject("")
+    setCustomSubject("")
   }
 
   const handleRemoveTag = (tag: string) => {
@@ -686,28 +744,53 @@ export default function DashboardPage() {
                               <FieldLabel>Навыки</FieldLabel>
                               <div className="mt-3 flex flex-wrap gap-2">
                                 {profile.tags.map((tag) => (
-                                  <Badge key={tag} className="px-3 py-1.5">
+                                  <Badge key={tag} className="gap-2 px-3 py-1.5">
                                     {tag}
-                                    <X
-                                      className="ml-2 h-3 w-3 cursor-pointer"
+                                    <button
+                                      type="button"
+                                      className="rounded-full p-0.5 transition-colors hover:bg-primary-foreground/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                       onClick={() => handleRemoveTag(tag)}
-                                    />
+                                      aria-label={`Удалить предмет ${tag}`}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </button>
                                   </Badge>
                                 ))}
                               </div>
 
-                              <div className="mt-4 flex gap-2">
-                                <Input
-                                  value={newTag}
-                                  onChange={(e) => setNewTag(e.target.value)}
-                                  placeholder="Например: высшая математика"
-                                  maxLength={40}
-                                  className="rounded-xl"
-                                />
-                                <Button type="button" onClick={handleAddTag} className="rounded-xl">
+                              <div className="mt-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                                <div className="space-y-2">
+                                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                                    <SelectTrigger className="h-11 w-full rounded-xl">
+                                      <SelectValue placeholder="Выбери предмет из списка" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-72">
+                                      {subjectOptions.map((subject) => (
+                                        <SelectItem key={subject} value={subject}>
+                                          {subject}
+                                        </SelectItem>
+                                      ))}
+                                      <SelectItem value={CUSTOM_SUBJECT_VALUE}>Свой вариант</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+
+                                  {selectedSubject === CUSTOM_SUBJECT_VALUE ? (
+                                    <Input
+                                      value={customSubject}
+                                      onChange={(e) => setCustomSubject(e.target.value)}
+                                      placeholder="Например: теория игр"
+                                      maxLength={40}
+                                      className="rounded-xl"
+                                    />
+                                  ) : null}
+                                </div>
+                                <Button type="button" onClick={handleAddTag} className="h-11 rounded-xl">
                                   <Plus />
                                 </Button>
                               </div>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                Можно выбрать базовый предмет или добавить свой вариант без оскорблений и ненормативной лексики.
+                              </p>
                             </Field>
                           </div>
 
